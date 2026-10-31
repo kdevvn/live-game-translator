@@ -361,7 +361,7 @@ export class OpenRouter {
       throw new Error('RESPONSE');
     }
   }
-  /** Gửi chat completion; model đã được người dùng chọn, không tự fallback. */
+  /** Gửi chat completion; các provider tắt suy luận khi dịch, bật cho tác vụ nền. */
   private async completion(
     model: string,
     messages: PromptMessage[],
@@ -396,7 +396,14 @@ export class OpenRouter {
               ...(sessionId ? { session_id: `${sessionId}:${purpose}` } : {}),
               provider: { require_parameters: true, sort: 'latency' },
             }
-          : {}),
+          : {
+              reasoning_effort: translating ? 'none' : 'medium',
+              ...(translating
+                ? {
+                    stream_options: { include_usage: true },
+                  }
+                : {}),
+            }),
       },
       signal,
       async (response, currentSignal, onEvent) =>

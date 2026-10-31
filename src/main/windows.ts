@@ -7,6 +7,16 @@ export type WindowRole = 'main' | 'capture' | 'overlay' | 'test';
 const TITLEBAR_HEIGHT = 38;
 const TITLEBAR_SYMBOLS = { dark: '#b4b4b4', light: '#5d5f60' };
 
+/** Chỉ hiện/ẩn phụ đề khi trạng thái đổi, tránh lặp lệnh cửa sổ theo từng cập nhật OCR. */
+export function updateOverlayVisibility(
+  window: Pick<BrowserWindow, 'isDestroyed' | 'isVisible' | 'showInactive' | 'hide'>,
+  visible: boolean,
+): void {
+  if (window.isDestroyed() || window.isVisible() === visible) return;
+  if (visible) window.showInactive();
+  else window.hide();
+}
+
 /** Dùng nền trong suốt để titlebar native theo cùng bề mặt với renderer. */
 function titlebarOptions() {
   return {

@@ -100,6 +100,7 @@ export class SessionController {
       (model) => this.backgroundLimit(model, 'profile'),
       () => this.emit(),
       errorCode,
+      () => this.canRunBackground(),
     );
     this.queue = new TranslationQueue(
       (d, signal) => this.translate(d, signal),
@@ -307,6 +308,19 @@ export class SessionController {
     this.state.ocrText = '';
     this.emit();
   }
+  /** Server local dành tài nguyên cho phụ đề trong suốt thời gian capture đang chạy. */
+  private canRunBackground(): boolean {
+    return (
+      this.state.settings.provider === 'openRouter' ||
+      (!['starting', 'running'].includes(this.state.status) &&
+        !this.state.dialogues.some((dialogue) => dialogue.status === 'pending'))
+    );
+  }
+  /** Xử lý lô còn thiếu trong DB sau thao tác tạm dừng/dừng chủ động của người dùng. */
+  runBackground(): void {
+    this.profileTasks.wake();
+    void this.summarize();
+  }
   /** Reset tạo phiên mới cho cùng hồ sơ, bảo toàn lịch sử phiên trước. */
   reset(): void {
     if (!this.state.session) throw new Error('INVALID_INPUT');
@@ -412,6 +426,11 @@ export class SessionController {
     this.state.dialogues.push(d);
     this.duplicateAnchor = d;
     this.db.saveDialogue(d);
+    if (this.state.settings.provider !== 'openRouter') {
+      this.summaryTask?.abort();
+      this.summaryTask = null;
+      this.profileTasks.cancel();
+    }
     this.queue.push(d);
     this.emit();
   }
@@ -432,6 +451,7 @@ export class SessionController {
         d.text,
         this.modelLimit,
         this.api.translationFormatInstruction(effectiveModel(this.state.settings)),
+        this.state.settings.provider !== 'openRouter',
       );
       const key = cacheKey(
         d.text,
@@ -488,8 +508,9 @@ export class SessionController {
       }
     }
   }
-  /** Tóm tắt đủ lô trên kết nối nền, không chờ hàng đợi dịch rảnh. */
+  /** Tóm tắt đủ lô khi được phép; local chờ tạm dừng, cloud giữ xử lý song song. */
   private async summarize(): Promise<void> {
+    if (!this.canRunBackground()) return;
     const session = this.state.session;
     const rows = session
       ? this.db.translatedAfter(session.id, session.summarizedThrough, SUMMARY_INTERVAL)

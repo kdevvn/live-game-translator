@@ -5,6 +5,117 @@ import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../../shared/defaults';
 import { SessionController } from './session';
 
 describe('Model và transport tác vụ nền', () => {
+  it.each(['lmStudio', 'ollama'] as const)(
+    'giữ lịch sử ổn định và hoãn tóm tắt qua %s suốt 50 câu, xử lý nền khi tạm dừng',
+    async (provider) => {
+      const db = openDatabase(':memory:');
+      db.saveProfile(DEFAULT_PROFILE);
+      const api = new OpenRouter(() => '');
+      let finishSummary: (text: string) => void = () => undefined;
+      const summary = vi.spyOn(api, 'summarize').mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            finishSummary = resolve;
+          }),
+      );
+      const translate = vi.spyOn(api, 'translate').mockResolvedValue({
+        translation: 'Chào.',
+        speaker: 'Alice',
+        listener: 'Bob',
+      });
+      const app = new SessionController(db, api, () => undefined);
+      try {
+        app.updateSettings({
+          ...DEFAULT_SETTINGS,
+          provider,
+          lmStudioModel: 'local',
+          ollamaModel: 'local',
+        });
+        app.openSession('general');
+        const generation = app.begin();
+        app.ready(generation);
+        for (let index = 1; index <= 50; index++) {
+          app.ocr(`Sentence number ${index}.`, generation, 0, true);
+          await vi.waitFor(() =>
+            expect(app.snapshot().dialogues.at(-1)?.status).toBe('translated'),
+          );
+        }
+        expect(summary).not.toHaveBeenCalled();
+        const thirteenth = translate.mock.calls[12][1];
+        const fourteenth = translate.mock.calls[13][1];
+        expect(fourteenth.slice(0, thirteenth.length - 1)).toEqual(thirteenth.slice(0, -1));
+        expect(
+          translate.mock.calls[49][1]
+            .slice(1, -1)
+            .map((message) => JSON.parse(message.content).source),
+        ).toEqual(Array.from({ length: 13 }, (_, index) => `Sentence number ${index + 37}.`));
+        app.runBackground();
+        expect(summary).not.toHaveBeenCalled();
+        app.stop('paused');
+        app.runBackground();
+        expect(summary).toHaveBeenCalledTimes(1);
+        expect(JSON.parse(summary.mock.calls[0][1]).dialogues).toHaveLength(20);
+        app.retry(app.snapshot().dialogues[0].id);
+        expect(summary.mock.calls[0][2].aborted).toBe(true);
+        app.ready(app.begin());
+        expect(summary.mock.calls[0][2].aborted).toBe(true);
+        finishSummary('Kết quả đã cũ.');
+        await new Promise((resolve) => setImmediate(resolve));
+        expect(app.snapshot().session?.summarizedThrough).toBe(0);
+      } finally {
+        app.stop();
+        db.close();
+      }
+    },
+  );
+
+  it.each(['lmStudio', 'ollama'] as const)(
+    'khởi tạo hồ sơ qua %s nhường tài nguyên lúc chạy và tiếp tục khi dừng',
+    async (provider) => {
+      const db = openDatabase(':memory:');
+      db.saveProfile({ ...DEFAULT_PROFILE, id: 'game', name: 'Game', aiEnabled: true });
+      const api = new OpenRouter(() => '');
+      const enrich = vi
+        .spyOn(api, 'enrichProfile')
+        .mockImplementationOnce(
+          (_model, _data, signal) =>
+            new Promise((_resolve, reject) => {
+              signal.addEventListener('abort', () => reject(new Error('CANCELLED')), {
+                once: true,
+              });
+            }),
+        )
+        .mockResolvedValue({
+          characters: [],
+          relationships: [],
+          glossary: [],
+          evidence: 'Chưa có dữ kiện.',
+        });
+      const app = new SessionController(db, api, () => undefined);
+      try {
+        app.updateSettings({
+          ...DEFAULT_SETTINGS,
+          provider,
+          lmStudioModel: 'local',
+          ollamaModel: 'local',
+        });
+        expect(enrich).toHaveBeenCalledTimes(1);
+        app.openSession('game');
+        app.ready(app.begin());
+        app.retryProfile('game');
+        expect(enrich.mock.calls[0][2].aborted).toBe(true);
+        expect(enrich).toHaveBeenCalledTimes(1);
+        app.stop();
+        app.runBackground();
+        await vi.waitFor(() => expect(db.profileInitialized('game')).toBe(true));
+        expect(enrich).toHaveBeenCalledTimes(2);
+      } finally {
+        app.stop();
+        db.close();
+      }
+    },
+  );
+
   it('câu bị lọc chỉ hiện OCR, không tạo lịch sử, sequence, cache hoặc request', async () => {
     const db = openDatabase(':memory:');
     db.saveProfile(DEFAULT_PROFILE);
