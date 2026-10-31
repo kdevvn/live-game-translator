@@ -385,6 +385,43 @@ describe('Luồng model local', () => {
 });
 
 describe('Tác vụ và timeout local', () => {
+  it.each(['lmStudio', 'ollama'] as const)(
+    '%s tắt thinking khi dịch, bật cho ngữ cảnh và hồ sơ',
+    async (provider) => {
+      const transport = vi.fn<typeof fetch>().mockImplementation(async (_url, options) => {
+        const body = JSON.parse(String(options?.body));
+        const content = body.stream
+          ? JSON.stringify({ translation: 'Chào.', speaker: '', listener: '' })
+          : body.response_format
+            ? JSON.stringify({
+                characters: [],
+                relationships: [],
+                glossary: [],
+                evidence: 'Không có dữ kiện.',
+              })
+            : 'Tóm tắt.';
+        return new Response(JSON.stringify({ choices: [{ message: { content } }] }));
+      });
+      const api = new OpenRouter(
+        () => '',
+        transport,
+        transport,
+        undefined,
+        () => ({ provider, baseUrl: 'http://localhost:1234/v1' }),
+      );
+      const signal = new AbortController().signal;
+      expect((await api.translate('local', [], signal)).translation).toBe('Chào.');
+      expect(await api.summarize('local', '{}', signal)).toBe('Tóm tắt.');
+      expect((await api.enrichProfile('local', '{}', signal)).evidence).toBe('Không có dữ kiện.');
+      const bodies = transport.mock.calls.map(([, options]) => JSON.parse(String(options?.body)));
+      expect(bodies.map((body) => body.reasoning_effort)).toEqual(['none', 'medium', 'medium']);
+      for (const body of bodies) {
+        expect(body).not.toHaveProperty('reasoning');
+        expect(body).not.toHaveProperty('provider');
+      }
+    },
+  );
+
   it.each(['gemma2', 'gemma4'])('tóm tắt và hồ sơ theo đúng kiến trúc %s', async (architecture) => {
     const transport = vi.fn<typeof fetch>().mockImplementation(async (_url, options) => {
       const body = JSON.parse(String(options?.body));
