@@ -1,0 +1,302 @@
+[
+  {
+    "file": "tests/fixtures/ocr/clear-01.png",
+    "expected": "Father, the gate is open.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-01.png",
+    "expected": "Father, the gate is open.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-02.png",
+    "expected": "Stay close to me, son.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-02.png",
+    "expected": "Stay close to me, son.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-03.png",
+    "expected": "We must leave before dawn.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-03.png",
+    "expected": "We must leave before dawn.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-04.png",
+    "expected": "Do you remember your promise?",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-04.png",
+    "expected": "Do you remember your promise?",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-05.png",
+    "expected": "I will not leave you behind.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-05.png",
+    "expected": "I will not leave you behind.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-06.png",
+    "expected": "Someone is waiting at the tower.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-06.png",
+    "expected": "Someone is waiting at the tower.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-07.png",
+    "expected": "Take the key and unlock the door.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-07.png",
+    "expected": "Take the key and unlock the door.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-08.png",
+    "expected": "There is no turning back now.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-08.png",
+    "expected": "There is no turning back now.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-09.png",
+    "expected": "Keep your voice down.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-09.png",
+    "expected": "Keep your voice down.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-10.png",
+    "expected": "The northern road is dangerous.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-10.png",
+    "expected": "The northern road is dangerous.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-11.png",
+    "expected": "You have my word.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-11.png",
+    "expected": "You have my word.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-12.png",
+    "expected": "Meet me by the old bridge.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-12.png",
+    "expected": "Meet me by the old bridge.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-13.png",
+    "expected": "This is where our journey begins.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-13.png",
+    "expected": "This is where our journey begins.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-14.png",
+    "expected": "I thought you were gone.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-14.png",
+    "expected": "I thought you were gone.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-15.png",
+    "expected": "Trust me, I know the way.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-15.png",
+    "expected": "Trust me, I know the way.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-16.png",
+    "expected": "We should speak to the captain.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-16.png",
+    "expected": "We should speak to the captain.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-17.png",
+    "expected": "Watch out for the guards.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-17.png",
+    "expected": "Watch out for the guards.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-18.png",
+    "expected": "The village needs our help.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-18.png",
+    "expected": "The village needs our help.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-19.png",
+    "expected": "What happened to your brother?",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-19.png",
+    "expected": "What happened to your brother?",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-20.png",
+    "expected": "Nothing is as it seems.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-20.png",
+    "expected": "Nothing is as it seems.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-21.png",
+    "expected": "Bring the medicine to the camp.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-21.png",
+    "expected": "Bring the medicine to the camp.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-22.png",
+    "expected": "The storm will pass soon.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-22.png",
+    "expected": "The storm will pass soon.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-23.png",
+    "expected": "Please forgive me, my friend.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-23.png",
+    "expected": "Please forgive me, my friend.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-24.png",
+    "expected": "Our supplies are running low.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-24.png",
+    "expected": "Our supplies are running low.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-25.png",
+    "expected": "I found something in the ruins.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-25.png",
+    "expected": "I found something in the ruins.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-26.png",
+    "expected": "You cannot fight them alone.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-26.png",
+    "expected": "You cannot fight them alone.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-27.png",
+    "expected": "Let us rest here for a while.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-27.png",
+    "expected": "Let us rest here for a while.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-28.png",
+    "expected": "Follow the river to the east.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-28.png",
+    "expected": "Follow the river to the east.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-29.png",
+    "expected": "Your courage will be remembered.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-29.png",
+    "expected": "Your courage will be remembered.",
+    "kind": "difficult"
+  },
+  {
+    "file": "tests/fixtures/ocr/clear-30.png",
+    "expected": "We still have a chance.",
+    "kind": "clear"
+  },
+  {
+    "file": "tests/fixtures/ocr/difficult-30.png",
+    "expected": "We still have a chance.",
+    "kind": "difficult"
+  }
+]

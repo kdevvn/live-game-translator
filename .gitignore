@@ -1,0 +1,14 @@
+node_modules/
+out/
+release/
+coverage/
+test-results/
+playwright-report/
+.taste-skill/inspect/
+.taste-skill/screens/
+.taste-skill/after/
+.env*
+*.log
+*.sqlite*
+src/renderer/public/ocr/
+tests/fixtures/ocr/*.png

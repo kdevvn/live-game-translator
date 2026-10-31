@@ -1,0 +1,440 @@
+[
+  {
+    "screen": "translation",
+    "theme": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "text": "Dịch cửa sổ",
+        "y": 73
+      },
+      {
+        "text": "Nguồn hình",
+        "y": 246
+      },
+      {
+        "text": "Chữ nhận dạng",
+        "y": 241
+      },
+      {
+        "text": "Ngữ cảnh đã nhớ",
+        "y": 530
+      },
+      {
+        "text": "Hội thoại",
+        "y": 692
+      }
+    ],
+    "fields": [
+      {
+        "tag": "SELECT",
+        "type": "select-one",
+        "name": "",
+        "label": "Hồ sơ game"
+      },
+      {
+        "tag": "SELECT",
+        "type": "select-one",
+        "name": "",
+        "label": "Tiếp tục phiên cũ"
+      },
+      {
+        "tag": "SELECT",
+        "type": "select-one",
+        "name": "",
+        "label": "Chọn cửa sổ ứng dụng"
+      },
+      {
+        "tag": "INPUT",
+        "type": "number",
+        "name": "",
+        "label": "Vị trí ngang"
+      },
+      {
+        "tag": "INPUT",
+        "type": "number",
+        "name": "",
+        "label": "Vị trí dọc"
+      },
+      {
+        "tag": "INPUT",
+        "type": "number",
+        "name": "",
+        "label": "Chiều rộng"
+      },
+      {
+        "tag": "INPUT",
+        "type": "number",
+        "name": "",
+        "label": "Chiều cao"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "label": "Tự động dịch khi câu ổn định"
+      }
+    ],
+    "anchors": [],
+    "font": "\"IBM Plex Sans\", system-ui, sans-serif"
+  },
+  {
+    "screen": "context",
+    "theme": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "text": "Hồ sơ game",
+        "y": 73
+      },
+      {
+        "text": "Nhân vật",
+        "y": 524
+      },
+      {
+        "text": "Cách xưng hô",
+        "y": 640
+      },
+      {
+        "text": "Thuật ngữ",
+        "y": 773
+      }
+    ],
+    "fields": [
+      {
+        "tag": "SELECT",
+        "type": "select-one",
+        "name": "",
+        "label": "Chọn hồ sơ"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "label": "Tên hồ sơ"
+      },
+      {
+        "tag": "TEXTAREA",
+        "type": "textarea",
+        "name": "",
+        "label": "Quy tắc dịch ưu tiên"
+      }
+    ],
+    "anchors": [],
+    "font": "\"IBM Plex Sans\", system-ui, sans-serif"
+  },
+  {
+    "screen": "settings",
+    "theme": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "text": "Cài đặt",
+        "y": 73
+      },
+      {
+        "text": "Giao diện",
+        "y": 179
+      },
+      {
+        "text": "OpenRouter",
+        "y": 418
+      },
+      {
+        "text": "Lọc câu tương tự",
+        "y": 788
+      },
+      {
+        "text": "Phím tắt",
+        "y": 1010
+      },
+      {
+        "text": "Phụ đề nổi",
+        "y": 1251
+      }
+    ],
+    "fields": [
+      {
+        "tag": "SELECT",
+        "type": "select-one",
+        "name": "",
+        "label": "Chủ đề"
+      },
+      {
+        "tag": "SELECT",
+        "type": "select-one",
+        "name": "",
+        "label": "Ngôn ngữ giao diện"
+      },
+      {
+        "tag": "INPUT",
+        "type": "password",
+        "name": "",
+        "label": "API key mới"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "label": "Model dịch"
+      },
+      {
+        "tag": "INPUT",
+        "type": "number",
+        "name": "",
+        "label": "Ngưỡng bỏ qua câu tương tự (%)"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "label": "Dịch ngay"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "label": "Tạm dừng / tiếp tục"
+      },
+      {
+        "tag": "INPUT",
+        "type": "number",
+        "name": "",
+        "label": "Cỡ chữ (px)"
+      },
+      {
+        "tag": "INPUT",
+        "type": "number",
+        "name": "",
+        "label": "Thời gian hiển thị (giây)"
+      },
+      {
+        "tag": "INPUT",
+        "type": "range",
+        "name": "",
+        "label": "Độ đậm nền (85%)"
+      }
+    ],
+    "anchors": [],
+    "font": "\"IBM Plex Sans\", system-ui, sans-serif"
+  },
+  {
+    "screen": "translation",
+    "theme": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "text": "Dịch cửa sổ",
+        "y": 73
+      },
+      {
+        "text": "Nguồn hình",
+        "y": 246
+      },
+      {
+        "text": "Chữ nhận dạng",
+        "y": 241
+      },
+      {
+        "text": "Ngữ cảnh đã nhớ",
+        "y": 530
+      },
+      {
+        "text": "Hội thoại",
+        "y": 692
+      }
+    ],
+    "fields": [
+      {
+        "tag": "SELECT",
+        "type": "select-one",
+        "name": "",
+        "label": "Hồ sơ game"
+      },
+      {
+        "tag": "SELECT",
+        "type": "select-one",
+        "name": "",
+        "label": "Tiếp tục phiên cũ"
+      },
+      {
+        "tag": "SELECT",
+        "type": "select-one",
+        "name": "",
+        "label": "Chọn cửa sổ ứng dụng"
+      },
+      {
+        "tag": "INPUT",
+        "type": "number",
+        "name": "",
+        "label": "Vị trí ngang"
+      },
+      {
+        "tag": "INPUT",
+        "type": "number",
+        "name": "",
+        "label": "Vị trí dọc"
+      },
+      {
+        "tag": "INPUT",
+        "type": "number",
+        "name": "",
+        "label": "Chiều rộng"
+      },
+      {
+        "tag": "INPUT",
+        "type": "number",
+        "name": "",
+        "label": "Chiều cao"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "label": "Tự động dịch khi câu ổn định"
+      }
+    ],
+    "anchors": [],
+    "font": "\"IBM Plex Sans\", system-ui, sans-serif"
+  },
+  {
+    "screen": "context",
+    "theme": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "text": "Hồ sơ game",
+        "y": 73
+      },
+      {
+        "text": "Nhân vật",
+        "y": 524
+      },
+      {
+        "text": "Cách xưng hô",
+        "y": 640
+      },
+      {
+        "text": "Thuật ngữ",
+        "y": 773
+      }
+    ],
+    "fields": [
+      {
+        "tag": "SELECT",
+        "type": "select-one",
+        "name": "",
+        "label": "Chọn hồ sơ"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "label": "Tên hồ sơ"
+      },
+      {
+        "tag": "TEXTAREA",
+        "type": "textarea",
+        "name": "",
+        "label": "Quy tắc dịch ưu tiên"
+      }
+    ],
+    "anchors": [],
+    "font": "\"IBM Plex Sans\", system-ui, sans-serif"
+  },
+  {
+    "screen": "settings",
+    "theme": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "text": "Cài đặt",
+        "y": 73
+      },
+      {
+        "text": "Giao diện",
+        "y": 179
+      },
+      {
+        "text": "OpenRouter",
+        "y": 418
+      },
+      {
+        "text": "Lọc câu tương tự",
+        "y": 788
+      },
+      {
+        "text": "Phím tắt",
+        "y": 1010
+      },
+      {
+        "text": "Phụ đề nổi",
+        "y": 1251
+      }
+    ],
+    "fields": [
+      {
+        "tag": "SELECT",
+        "type": "select-one",
+        "name": "",
+        "label": "Chủ đề"
+      },
+      {
+        "tag": "SELECT",
+        "type": "select-one",
+        "name": "",
+        "label": "Ngôn ngữ giao diện"
+      },
+      {
+        "tag": "INPUT",
+        "type": "password",
+        "name": "",
+        "label": "API key mới"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "label": "Model dịch"
+      },
+      {
+        "tag": "INPUT",
+        "type": "number",
+        "name": "",
+        "label": "Ngưỡng bỏ qua câu tương tự (%)"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "label": "Dịch ngay"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "label": "Tạm dừng / tiếp tục"
+      },
+      {
+        "tag": "INPUT",
+        "type": "number",
+        "name": "",
+        "label": "Cỡ chữ (px)"
+      },
+      {
+        "tag": "INPUT",
+        "type": "number",
+        "name": "",
+        "label": "Thời gian hiển thị (giây)"
+      },
+      {
+        "tag": "INPUT",
+        "type": "range",
+        "name": "",
+        "label": "Độ đậm nền (85%)"
+      }
+    ],
+    "anchors": [],
+    "font": "\"IBM Plex Sans\", system-ui, sans-serif"
+  }
+]

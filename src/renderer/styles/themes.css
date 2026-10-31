@@ -1,0 +1,35 @@
+:root {
+  --ground: var(--color-base-200);
+  --surface: var(--color-base-100);
+  --raised: var(--color-base-200);
+  --active: var(--color-base-300);
+  --panel-border: var(--color-base-300);
+  --rule: var(--color-base-300);
+  --control: color-mix(in oklch, var(--color-base-content) 30%, var(--color-base-100));
+  --text: var(--color-base-content);
+  --muted: color-mix(in oklch, var(--color-base-content) 75%, var(--color-base-100));
+  --faint: color-mix(in oklch, var(--color-base-content) 75%, var(--color-base-100));
+  --accent: var(--color-primary);
+  --positive: color-mix(in oklch, var(--color-success) 65%, var(--color-base-content));
+  --negative: color-mix(in oklch, var(--color-error) 65%, var(--color-base-content));
+  --primary: var(--color-primary);
+  --on-primary: var(--color-primary-content);
+  --focus: var(--color-primary);
+  --preview-bg: var(--color-base-300);
+  --selection: var(--color-info);
+  --selection-bg: var(--color-base-100);
+  --subtitle-text: #fff;
+  --subtitle-bg: #111;
+  --overlay-fullscreen-bg: #000;
+  --scrim: #0006;
+  --radius: 8px;
+  --control-radius: 6px;
+  --sheet-radius: 6px;
+  --gap: 16px;
+  --pad: 24px;
+  --titlebar-height: 38px;
+  --statusbar-height: 26px;
+  --sidebar-width: 224px;
+  --inspector-width: 300px;
+  --font: 'IBM Plex Sans', system-ui, sans-serif;
+}

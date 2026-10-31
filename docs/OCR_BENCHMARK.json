@@ -1,0 +1,499 @@
+{
+  "generated": true,
+  "engine": "PaddleOCR PP-OCRv5 mobile det + en mobile rec, ONNX WASM",
+  "description": "Ảnh phụ đề tổng hợp, chưa đại diện mọi font/game thật.",
+  "summary": {
+    "clear": {
+      "count": 30,
+      "meanCer": 0,
+      "meanMs": 607.9666666666667
+    },
+    "difficult": {
+      "count": 30,
+      "meanCer": 0.007706243469174505,
+      "meanMs": 536.1
+    }
+  },
+  "results": [
+    {
+      "file": "tests/fixtures/ocr/clear-01.png",
+      "kind": "clear",
+      "expected": "Father, the gate is open.",
+      "actual": "Father, the gate is open.",
+      "cer": 0,
+      "ms": 2523
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-01.png",
+      "kind": "difficult",
+      "expected": "Father, the gate is open.",
+      "actual": "Father, the gate is open.",
+      "cer": 0,
+      "ms": 309
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-02.png",
+      "kind": "clear",
+      "expected": "Stay close to me, son.",
+      "actual": "Stay close to me, son.",
+      "cer": 0,
+      "ms": 252
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-02.png",
+      "kind": "difficult",
+      "expected": "Stay close to me, son.",
+      "actual": "Stay close to me, son",
+      "cer": 0.045454545454545456,
+      "ms": 240
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-03.png",
+      "kind": "clear",
+      "expected": "We must leave before dawn.",
+      "actual": "We must leave before dawn.",
+      "cer": 0,
+      "ms": 324
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-03.png",
+      "kind": "difficult",
+      "expected": "We must leave before dawn.",
+      "actual": "We must leave before dawn.",
+      "cer": 0,
+      "ms": 293
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-04.png",
+      "kind": "clear",
+      "expected": "Do you remember your promise?",
+      "actual": "Do you remember your promise?",
+      "cer": 0,
+      "ms": 375
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-04.png",
+      "kind": "difficult",
+      "expected": "Do you remember your promise?",
+      "actual": "Do you remember your promise?",
+      "cer": 0,
+      "ms": 308
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-05.png",
+      "kind": "clear",
+      "expected": "I will not leave you behind.",
+      "actual": "I will not leave you behind.",
+      "cer": 0,
+      "ms": 314
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-05.png",
+      "kind": "difficult",
+      "expected": "I will not leave you behind.",
+      "actual": "I will not leave you behind.",
+      "cer": 0,
+      "ms": 370
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-06.png",
+      "kind": "clear",
+      "expected": "Someone is waiting at the tower.",
+      "actual": "Someone is waiting at the tower.",
+      "cer": 0,
+      "ms": 384
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-06.png",
+      "kind": "difficult",
+      "expected": "Someone is waiting at the tower.",
+      "actual": "Someone is waiting at the tower.",
+      "cer": 0,
+      "ms": 369
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-07.png",
+      "kind": "clear",
+      "expected": "Take the key and unlock the door.",
+      "actual": "Take the key and unlock the door.",
+      "cer": 0,
+      "ms": 317
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-07.png",
+      "kind": "difficult",
+      "expected": "Take the key and unlock the door.",
+      "actual": "Take the key and unlock the door.",
+      "cer": 0,
+      "ms": 292
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-08.png",
+      "kind": "clear",
+      "expected": "There is no turning back now.",
+      "actual": "There is no turning back now.",
+      "cer": 0,
+      "ms": 346
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-08.png",
+      "kind": "difficult",
+      "expected": "There is no turning back now.",
+      "actual": "There is noturning back now.",
+      "cer": 0.034482758620689655,
+      "ms": 477
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-09.png",
+      "kind": "clear",
+      "expected": "Keep your voice down.",
+      "actual": "Keep your voice down.",
+      "cer": 0,
+      "ms": 329
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-09.png",
+      "kind": "difficult",
+      "expected": "Keep your voice down.",
+      "actual": "Keep your voice down.",
+      "cer": 0,
+      "ms": 423
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-10.png",
+      "kind": "clear",
+      "expected": "The northern road is dangerous.",
+      "actual": "The northern road is dangerous.",
+      "cer": 0,
+      "ms": 602
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-10.png",
+      "kind": "difficult",
+      "expected": "The northern road is dangerous.",
+      "actual": "The northern road is dangerous.",
+      "cer": 0,
+      "ms": 563
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-11.png",
+      "kind": "clear",
+      "expected": "You have my word.",
+      "actual": "You have my word.",
+      "cer": 0,
+      "ms": 568
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-11.png",
+      "kind": "difficult",
+      "expected": "You have my word.",
+      "actual": "You have my word.",
+      "cer": 0,
+      "ms": 515
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-12.png",
+      "kind": "clear",
+      "expected": "Meet me by the old bridge.",
+      "actual": "Meet me by the old bridge.",
+      "cer": 0,
+      "ms": 926
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-12.png",
+      "kind": "difficult",
+      "expected": "Meet me by the old bridge.",
+      "actual": "Meet me by the old bridge.",
+      "cer": 0,
+      "ms": 756
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-13.png",
+      "kind": "clear",
+      "expected": "This is where our journey begins.",
+      "actual": "This is where our journey begins.",
+      "cer": 0,
+      "ms": 862
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-13.png",
+      "kind": "difficult",
+      "expected": "This is where our journey begins.",
+      "actual": "This is where our journey begins.",
+      "cer": 0,
+      "ms": 886
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-14.png",
+      "kind": "clear",
+      "expected": "I thought you were gone.",
+      "actual": "I thought you were gone.",
+      "cer": 0,
+      "ms": 966
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-14.png",
+      "kind": "difficult",
+      "expected": "I thought you were gone.",
+      "actual": "I thought you were gone.",
+      "cer": 0,
+      "ms": 826
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-15.png",
+      "kind": "clear",
+      "expected": "Trust me, I know the way.",
+      "actual": "Trust me, I know the way.",
+      "cer": 0,
+      "ms": 599
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-15.png",
+      "kind": "difficult",
+      "expected": "Trust me, I know the way.",
+      "actual": "Trust me, I know the way.",
+      "cer": 0,
+      "ms": 463
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-16.png",
+      "kind": "clear",
+      "expected": "We should speak to the captain.",
+      "actual": "We should speak to the captain.",
+      "cer": 0,
+      "ms": 515
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-16.png",
+      "kind": "difficult",
+      "expected": "We should speak to the captain.",
+      "actual": "We should speak to the captain.",
+      "cer": 0,
+      "ms": 606
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-17.png",
+      "kind": "clear",
+      "expected": "Watch out for the guards.",
+      "actual": "Watch out for the guards.",
+      "cer": 0,
+      "ms": 635
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-17.png",
+      "kind": "difficult",
+      "expected": "Watch out for the guards.",
+      "actual": "Watch out for the guards",
+      "cer": 0.04,
+      "ms": 474
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-18.png",
+      "kind": "clear",
+      "expected": "The village needs our help.",
+      "actual": "The village needs our help.",
+      "cer": 0,
+      "ms": 659
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-18.png",
+      "kind": "difficult",
+      "expected": "The village needs our help.",
+      "actual": "The village needs our help.",
+      "cer": 0,
+      "ms": 621
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-19.png",
+      "kind": "clear",
+      "expected": "What happened to your brother?",
+      "actual": "What happened to your brother?",
+      "cer": 0,
+      "ms": 518
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-19.png",
+      "kind": "difficult",
+      "expected": "What happened to your brother?",
+      "actual": "What happened to your brother?",
+      "cer": 0,
+      "ms": 591
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-20.png",
+      "kind": "clear",
+      "expected": "Nothing is as it seems.",
+      "actual": "Nothing is as it seems.",
+      "cer": 0,
+      "ms": 453
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-20.png",
+      "kind": "difficult",
+      "expected": "Nothing is as it seems.",
+      "actual": "Nothing is as it seems.",
+      "cer": 0,
+      "ms": 482
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-21.png",
+      "kind": "clear",
+      "expected": "Bring the medicine to the camp.",
+      "actual": "Bring the medicine to the camp.",
+      "cer": 0,
+      "ms": 490
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-21.png",
+      "kind": "difficult",
+      "expected": "Bring the medicine to the camp.",
+      "actual": "Bring the medicine to the camp.",
+      "cer": 0,
+      "ms": 504
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-22.png",
+      "kind": "clear",
+      "expected": "The storm will pass soon.",
+      "actual": "The storm will pass soon.",
+      "cer": 0,
+      "ms": 452
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-22.png",
+      "kind": "difficult",
+      "expected": "The storm will pass soon.",
+      "actual": "The storm will l pass soon.",
+      "cer": 0.08,
+      "ms": 508
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-23.png",
+      "kind": "clear",
+      "expected": "Please forgive me, my friend.",
+      "actual": "Please forgive me, my friend.",
+      "cer": 0,
+      "ms": 481
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-23.png",
+      "kind": "difficult",
+      "expected": "Please forgive me, my friend.",
+      "actual": "Please forgive me, my friend.",
+      "cer": 0,
+      "ms": 440
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-24.png",
+      "kind": "clear",
+      "expected": "Our supplies are running low.",
+      "actual": "Our supplies are running low.",
+      "cer": 0,
+      "ms": 430
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-24.png",
+      "kind": "difficult",
+      "expected": "Our supplies are running low.",
+      "actual": "Our supplies are running low.",
+      "cer": 0,
+      "ms": 571
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-25.png",
+      "kind": "clear",
+      "expected": "I found something in the ruins.",
+      "actual": "I found something in the ruins.",
+      "cer": 0,
+      "ms": 737
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-25.png",
+      "kind": "difficult",
+      "expected": "I found something in the ruins.",
+      "actual": "I found something in the ruins.",
+      "cer": 0,
+      "ms": 766
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-26.png",
+      "kind": "clear",
+      "expected": "You cannot fight them alone.",
+      "actual": "You cannot fight them alone.",
+      "cer": 0,
+      "ms": 629
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-26.png",
+      "kind": "difficult",
+      "expected": "You cannot fight them alone.",
+      "actual": "You cannot fight them alone.",
+      "cer": 0,
+      "ms": 652
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-27.png",
+      "kind": "clear",
+      "expected": "Let us rest here for a while.",
+      "actual": "Let us rest here for a while.",
+      "cer": 0,
+      "ms": 603
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-27.png",
+      "kind": "difficult",
+      "expected": "Let us rest here for a while.",
+      "actual": "Let us rest here for a while.",
+      "cer": 0,
+      "ms": 762
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-28.png",
+      "kind": "clear",
+      "expected": "Follow the river to the east.",
+      "actual": "Follow the river to the east.",
+      "cer": 0,
+      "ms": 612
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-28.png",
+      "kind": "difficult",
+      "expected": "Follow the river to the east.",
+      "actual": "Follow the river to the east.",
+      "cer": 0,
+      "ms": 636
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-29.png",
+      "kind": "clear",
+      "expected": "Your courage will be remembered.",
+      "actual": "Your courage will be remembered.",
+      "cer": 0,
+      "ms": 638
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-29.png",
+      "kind": "difficult",
+      "expected": "Your courage will be remembered.",
+      "actual": "Your courage will be remembered",
+      "cer": 0.03125,
+      "ms": 844
+    },
+    {
+      "file": "tests/fixtures/ocr/clear-30.png",
+      "kind": "clear",
+      "expected": "We still have a chance.",
+      "actual": "We still have a chance.",
+      "cer": 0,
+      "ms": 700
+    },
+    {
+      "file": "tests/fixtures/ocr/difficult-30.png",
+      "kind": "difficult",
+      "expected": "We still have a chance.",
+      "actual": "We still have a chance.",
+      "cer": 0,
+      "ms": 536
+    }
+  ]
+}

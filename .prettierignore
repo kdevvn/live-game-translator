@@ -1,0 +1,9 @@
+node_modules
+out
+release
+test-results
+playwright-report
+.taste-skill
+src/renderer/public/ocr
+package-lock.json
+.agents/skills
