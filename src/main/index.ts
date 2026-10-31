@@ -21,7 +21,7 @@ import { DebugLog } from './features/debugLog';
 import { listCaptureSources } from './features/captureSources';
 import { createOpenRouterTransport } from './features/openRouterTransport';
 import { SessionController, errorCode } from './features/session';
-import { createWindow } from './windows';
+import { createWindow, updateOverlayVisibility } from './windows';
 import { capturePermission, handle } from './ipc';
 import { CHANNELS } from '../shared/channels';
 import { DEFAULT_REGION } from '../shared/defaults';
@@ -168,10 +168,7 @@ void app
       const state = publicSnapshot();
       for (const win of [main, overlay])
         if (win && !win.isDestroyed()) win.webContents.send(CHANNELS.state, state);
-      if (overlay && !overlay.isDestroyed()) {
-        if (shouldShowOverlay(state)) overlay.showInactive();
-        else overlay.hide();
-      }
+      if (overlay) updateOverlayVisibility(overlay, shouldShowOverlay(state));
     }
     const controller = new SessionController(db, api, broadcast);
     /** Cache danh sách thuộc đúng nhà cung cấp và server đã cấu hình. */
