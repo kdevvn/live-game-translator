@@ -285,6 +285,7 @@ void app
         capture?.webContents.send(CHANNELS.captureCommand, command);
         controller.stop('paused');
       } else stop('paused');
+      if (controller.snapshot().status === 'paused') controller.runBackground();
     }
     /** Đăng ký cả hai phím tắt nguyên tử và phục hồi khi lựa chọn bị xung đột. */
     function shortcuts(translate: string, toggle: string): void {
@@ -507,8 +508,10 @@ void app
       },
     );
     handle(CHANNELS.control, mainOwners, z.enum(['stop', 'pause', 'translate']), async (action) => {
-      if (action === 'stop') stop();
-      else if (action === 'pause') await pause();
+      if (action === 'stop') {
+        stop();
+        controller.runBackground();
+      } else if (action === 'pause') await pause();
       else capture?.webContents.send(CHANNELS.captureCommand, { action: 'recognize' });
     });
     const editSchema = z.object({

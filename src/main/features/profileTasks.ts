@@ -19,6 +19,7 @@ export class ProfileTasks {
     private readonly limit: (model: string) => number,
     private readonly changed: () => void,
     private readonly errorCode: (error: unknown) => AppError,
+    private readonly canRun: () => boolean = () => true,
   ) {}
 
   /** Trạng thái công khai theo hồ sơ, không cung cấp prompt hoặc khóa bí mật. */
@@ -93,9 +94,9 @@ export class ProfileTasks {
       if (state.error === 'CONTEXT_LIMIT') this.states.delete(id);
   }
 
-  /** Tìm lần khởi tạo hoặc lô hội thoại tiếp theo; không chờ dịch rảnh. */
+  /** Tìm lần khởi tạo hoặc lô tiếp theo khi bộ điều phối cho phép dùng tài nguyên nền. */
   wake(): void {
-    if (this.current) return;
+    if (this.current || !this.canRun()) return;
     const settings = this.settings();
     const model = effectiveModel(settings, 'profile');
     const profiles = this.db
