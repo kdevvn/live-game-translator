@@ -4,6 +4,76 @@ import type { Dialogue } from '../../shared/types';
 import { DEFAULT_PROFILE, HISTORY_LIMIT } from '../../shared/defaults';
 
 describe('Ngữ cảnh và cache', () => {
+  it('thiếu ngân sách vẫn giữ đầu lịch sử local ổn định qua các câu tiếp theo', () => {
+    const history: Dialogue[] = Array.from({ length: 14 }, (_, index) => ({
+      id: String(index),
+      sessionId: 's',
+      sequence: index + 1,
+      text: `Source ${index + 1}`,
+      translation: `Dịch ${index + 1}`,
+      speaker: 'Alice',
+      listener: 'Bob',
+      status: 'translated',
+      createdAt: 0,
+      ocrMs: 0,
+      apiMs: 0,
+    }));
+    const full = buildMessages(DEFAULT_PROFILE, '', history.slice(0, 12), 'Next.', 6000);
+    const budget = full.reduce(
+      (sum, message) => sum + Buffer.byteLength(message.content, 'utf8') + 16,
+      0,
+    );
+    const first = buildMessages(
+      DEFAULT_PROFILE,
+      '',
+      history.slice(0, 13),
+      'Next.',
+      budget,
+      '',
+      true,
+    );
+    const next = buildMessages(DEFAULT_PROFILE, '', history, 'Next.', budget, '', true);
+    expect(next.slice(0, first.length - 1)).toEqual(first.slice(0, -1));
+    expect(JSON.parse(next[next.length - 2].content).source).toBe('Source 14');
+    for (const messages of [first, next]) {
+      expect(
+        messages.reduce((sum, message) => sum + Buffer.byteLength(message.content, 'utf8') + 16, 0),
+      ).toBeLessThanOrEqual(budget);
+      expect(messages[0]).toEqual(full[0]);
+      expect(messages.at(-1)).toEqual(full.at(-1));
+    }
+  });
+
+  it('không gửi danh tính chưa biết trong lịch sử nhưng giữ nhân vật đã xác định', () => {
+    const dialogue: Dialogue = {
+      id: 'd',
+      sessionId: 's',
+      sequence: 1,
+      text: 'Hello.',
+      translation: 'Chào.',
+      speaker: 'unknown',
+      listener: 'unknown',
+      status: 'translated',
+      createdAt: 0,
+      ocrMs: 0,
+      apiMs: 0,
+    };
+    const messages = buildMessages(DEFAULT_PROFILE, '', [dialogue], 'Next.', 6000);
+    expect(JSON.parse(messages[1].content)).toEqual({ source: 'Hello.', translation: 'Chào.' });
+    const known = buildMessages(
+      DEFAULT_PROFILE,
+      '',
+      [{ ...dialogue, listener: 'Adam' }],
+      'Next.',
+      6000,
+    );
+    expect(JSON.parse(known[1].content)).toEqual({
+      source: 'Hello.',
+      translation: 'Chào.',
+      listener: 'Adam',
+    });
+  });
+
   it('giữ prefix local qua mốc 12 câu mà vẫn giữ ít nhất các câu gần nhất và giới hạn ngân sách', () => {
     const history: Dialogue[] = Array.from({ length: HISTORY_LIMIT * 2 }, (_, index) => ({
       id: String(index),

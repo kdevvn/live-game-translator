@@ -418,6 +418,13 @@ describe('Tác vụ và timeout local', () => {
       for (const body of bodies) {
         expect(body).not.toHaveProperty('reasoning');
         expect(body).not.toHaveProperty('provider');
+        if (body.stream) {
+          expect(body.temperature).toBe(0);
+          expect(body.stream_options).toEqual({ include_usage: true });
+        } else {
+          expect(body).not.toHaveProperty('temperature');
+          expect(body).not.toHaveProperty('stream_options');
+        }
       }
     },
   );

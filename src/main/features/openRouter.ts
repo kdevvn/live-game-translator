@@ -30,6 +30,7 @@ const localModelSchema = z.object({
 const MAX_DEBUG_ERROR_BYTES = 400_000;
 export const OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1';
 const TRANSLATION_OUTPUT_TOKENS = 1024;
+const LOCAL_TRANSLATION_TEMPERATURE = 0;
 const SUMMARY_OUTPUT_TOKENS = 2048;
 const PROFILE_OUTPUT_TOKENS = 4096;
 const RESPONSE_CACHE_TTL_SECONDS = 300;
@@ -396,7 +397,15 @@ export class OpenRouter {
               ...(sessionId ? { session_id: `${sessionId}:${purpose}` } : {}),
               provider: { require_parameters: true, sort: 'latency' },
             }
-          : { reasoning_effort: translating ? 'none' : 'medium' }),
+          : {
+              reasoning_effort: translating ? 'none' : 'medium',
+              ...(translating
+                ? {
+                    temperature: LOCAL_TRANSLATION_TEMPERATURE,
+                    stream_options: { include_usage: true },
+                  }
+                : {}),
+            }),
       },
       signal,
       async (response, currentSignal, onEvent) =>
