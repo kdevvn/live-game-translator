@@ -219,7 +219,7 @@ export function initializeCapture(): () => void {
     const currentToken = token;
     let nextWorker: OcrEngine | null = null;
     try {
-      const videoConstraints = {
+      const videoConstraints: MediaTrackConstraints & { resizeMode: ConstrainDOMString } = {
         resizeMode: { ideal: 'none' },
       };
       const nextStream = reuse

@@ -9,6 +9,7 @@ export default ts.config(
       'release/**',
       'node_modules/**',
       '.taste-skill/**',
+      '.agents/skills/**',
       'src/renderer/public/**',
       'test-results/**',
       'playwright-report/**',

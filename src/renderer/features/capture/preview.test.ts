@@ -41,7 +41,12 @@ it('preview không đặt giới hạn FPS và giữ giới hạn Full HD', asyn
       sendEncodings: [expect.objectContaining({ scaleResolutionDownBy: 2 })],
     }),
   );
-  expect(addTransceiver.mock.calls[0][1].sendEncodings[0]).not.toHaveProperty('maxFramerate');
+  expect(addTransceiver).toHaveBeenCalledWith(
+    track,
+    expect.objectContaining({
+      sendEncodings: [expect.not.objectContaining({ maxFramerate: expect.anything() })],
+    }),
+  );
   expect(setParameters.mock.calls[0][0].encodings[0]).not.toHaveProperty('maxFramerate');
   expect(addTransceiver).toHaveBeenCalledTimes(1);
   expect(setParameters).toHaveBeenCalledWith(

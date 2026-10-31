@@ -1,8 +1,8 @@
 {
-  "name": "live-game-translator",
+  "name": "translate-game",
   "version": "0.1.0",
   "description": "Dịch phụ đề cửa sổ Windows bằng OCR và OpenRouter",
-  "author": "Live Game Translator",
+  "author": "Translate Game",
   "private": true,
   "main": "out/main/index.js",
   "scripts": {

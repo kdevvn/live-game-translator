@@ -9,37 +9,6 @@ import { effectiveModel } from '../../shared/modelSettings';
 import { getOverlayText } from '../../shared/overlay';
 
 describe('LM Studio', () => {
-  it.each(['lmStudio', 'ollama'] as const)(
-    'tắt suy luận khi dịch qua %s và giữ nguyên JSON có cấu trúc',
-    async (provider) => {
-      const transport = vi.fn<typeof fetch>().mockImplementation(
-        async () =>
-          new Response(
-            JSON.stringify({
-              choices: [
-                { message: { content: '{"translation":"Chào.","speaker":"","listener":""}' } },
-              ],
-            }),
-          ),
-      );
-      const api = new OpenRouter(
-        () => '',
-        transport,
-        transport,
-        undefined,
-        () => ({ provider, baseUrl: 'http://localhost:1234/v1' }),
-      );
-      const result = await api.translate('local', [], new AbortController().signal);
-      expect(result.translation).toBe('Chào.');
-      const body = JSON.parse(String(transport.mock.calls[0][1]?.body));
-      expect(body.reasoning_effort).toBe('none');
-      expect(body.temperature).toBe(0);
-      expect(body.stream_options).toEqual({ include_usage: true });
-      expect(body.stream).toBe(true);
-      expect(body.response_format.type).toBe('json_schema');
-    },
-  );
-
   it('server thiếu API metadata vẫn dùng danh sách chuẩn và không đoán gemma2 theo tên', async () => {
     const transport = vi.fn<typeof fetch>().mockImplementation(async (url) => {
       if (String(url).endsWith('/api/v0/models')) return new Response('', { status: 404 });
@@ -455,8 +424,6 @@ describe('Tác vụ và timeout local', () => {
         architecture === 'gemma2' ? ['user'] : ['system', 'user'],
       );
       expect(body).not.toHaveProperty('reasoning');
-      expect(body).not.toHaveProperty('reasoning_effort');
-      expect(body).not.toHaveProperty('temperature');
       expect(body).not.toHaveProperty('provider');
     }
   });

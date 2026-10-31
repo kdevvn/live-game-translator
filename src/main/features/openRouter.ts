@@ -36,7 +36,6 @@ const RESPONSE_CACHE_TTL_SECONDS = 300;
 const COMPLETION_OVERHEAD_TOKENS = 128;
 const BACKGROUND_API_TIMEOUT_MS = 240_000;
 const TOKENS_PER_MILLION = 1_000_000;
-const LOCAL_TRANSLATION_TEMPERATURE = 0;
 
 /** Chuyển giá theo token thành USD trên một triệu token; bỏ qua giá không hợp lệ. */
 function pricePerMillion(value: string | undefined): number | undefined {
@@ -397,13 +396,7 @@ export class OpenRouter {
               ...(sessionId ? { session_id: `${sessionId}:${purpose}` } : {}),
               provider: { require_parameters: true, sort: 'latency' },
             }
-          : translating
-            ? {
-                reasoning_effort: 'none',
-                temperature: LOCAL_TRANSLATION_TEMPERATURE,
-                stream_options: { include_usage: true },
-              }
-            : {}),
+          : {}),
       },
       signal,
       async (response, currentSignal, onEvent) =>

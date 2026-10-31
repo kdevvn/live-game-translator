@@ -37,11 +37,8 @@ import type { CaptureCommand, Dialogue, SessionSnapshot } from '../shared/types'
 
 const BACKGROUND_CONNECTIONS = 4;
 
-// Gi? th? m?c d? li?u c? khi ??i t?n s?n ph?m.
-app.setPath(
-  'userData',
-  process.env.TRANSLATE_GAME_DATA_DIR ?? join(app.getPath('appData'), 'Translate Game'),
-);
+if (process.env.TRANSLATE_GAME_DATA_DIR)
+  app.setPath('userData', process.env.TRANSLATE_GAME_DATA_DIR);
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'app',
@@ -284,12 +281,10 @@ void app
           action: 'preview',
           sourceId: command.sourceId,
           generation: command.previewGeneration ?? command.generation,
-          fps: command.fps,
         };
         capture?.webContents.send(CHANNELS.captureCommand, command);
         controller.stop('paused');
       } else stop('paused');
-      if (controller.snapshot().status === 'paused') controller.runBackground();
     }
     /** Đăng ký cả hai phím tắt nguyên tử và phục hồi khi lựa chọn bị xung đột. */
     function shortcuts(translate: string, toggle: string): void {
@@ -512,10 +507,8 @@ void app
       },
     );
     handle(CHANNELS.control, mainOwners, z.enum(['stop', 'pause', 'translate']), async (action) => {
-      if (action === 'stop') {
-        stop();
-        controller.runBackground();
-      } else if (action === 'pause') await pause();
+      if (action === 'stop') stop();
+      else if (action === 'pause') await pause();
       else capture?.webContents.send(CHANNELS.captureCommand, { action: 'recognize' });
     });
     const editSchema = z.object({

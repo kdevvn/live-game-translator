@@ -8,7 +8,7 @@ it('danh sách nguồn chỉ trả cửa sổ ngoài ứng dụng, không chụp
   const ownThumbnail = vi.fn();
   const thumbnail = 'data:image/png;base64,full-resolution-window';
   getSources.mockResolvedValue([
-    { id: 'window:1:0', name: 'Live Game Translator', thumbnail: { toDataURL: ownThumbnail } },
+    { id: 'window:1:0', name: 'Translate Game', thumbnail: { toDataURL: ownThumbnail } },
     { id: 'window:2:0', name: 'Game', thumbnail: { toDataURL: () => thumbnail } },
   ]);
 

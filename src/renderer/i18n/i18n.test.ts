@@ -10,6 +10,12 @@ function keys(value: object, prefix = ''): string[] {
   );
 }
 describe('Đa ngôn ngữ', () => {
+  it('hiển thị tên ứng dụng nhất quán ở cả hai ngôn ngữ', async () => {
+    await initializeI18n('vi');
+    expect(i18n.t('app.name')).toBe('Live Game Translator');
+    await i18n.changeLanguage('en');
+    expect(i18n.t('app.name')).toBe('Live Game Translator');
+  });
   it('hai locale có đầy đủ cùng bộ key', () => {
     expect(keys(vi).sort()).toEqual(keys(en).sort());
   });
