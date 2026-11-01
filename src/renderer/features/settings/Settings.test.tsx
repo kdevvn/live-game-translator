@@ -101,11 +101,11 @@ describe('Chọn model dịch', () => {
   it('tự lưu khi đổi thiết lập và không hiện nút lưu', async () => {
     const { save } = await openSettings();
     expect(screen.queryByRole('button', { name: 'app.save' })).toBeNull();
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.overlayDuration' }), {
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.profileLearningInterval' }), {
       target: { value: '8' },
     });
     await vi.waitFor(() =>
-      expect(save).toHaveBeenCalledWith(expect.objectContaining({ overlayDurationSeconds: 8 })),
+      expect(save).toHaveBeenCalledWith(expect.objectContaining({ profileLearningInterval: 8 })),
     );
   });
   it('tự lưu API key khi rời ô nhập', async () => {
@@ -117,15 +117,15 @@ describe('Chọn model dịch', () => {
   });
   it('không lưu giá trị sai và vẫn lưu trường hợp lệ khác', async () => {
     const { save } = await openSettings();
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.overlayDuration' }), {
-      target: { value: '100' },
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.profileLearningInterval' }), {
+      target: { value: '201' },
     });
     fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.duplicateThreshold' }), {
       target: { value: '90' },
     });
     await vi.waitFor(() =>
       expect(save).toHaveBeenCalledWith(
-        expect.objectContaining({ overlayDurationSeconds: 5, duplicateThreshold: 90 }),
+        expect.objectContaining({ profileLearningInterval: 20, duplicateThreshold: 90 }),
       ),
     );
   });
@@ -138,7 +138,7 @@ describe('Chọn model dịch', () => {
           finish = () => resolve({ ok: true });
         }),
     );
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.overlayDuration' }), {
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.profileLearningInterval' }), {
       target: { value: '8' },
     });
     await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
@@ -150,18 +150,18 @@ describe('Chọn model dịch', () => {
     finish?.();
     await vi.waitFor(() =>
       expect(save).toHaveBeenLastCalledWith(
-        expect.objectContaining({ overlayDurationSeconds: 8, duplicateThreshold: 90 }),
+        expect.objectContaining({ profileLearningInterval: 8, duplicateThreshold: 90 }),
       ),
     );
   });
   it('lưu thay đổi đang chờ khi rời trang', async () => {
     const { save } = await openSettings();
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.overlayDuration' }), {
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.profileLearningInterval' }), {
       target: { value: '9' },
     });
     cleanup();
     await vi.waitFor(() =>
-      expect(save).toHaveBeenCalledWith(expect.objectContaining({ overlayDurationSeconds: 9 })),
+      expect(save).toHaveBeenCalledWith(expect.objectContaining({ profileLearningInterval: 9 })),
     );
   });
   it('hiện mặc định 15000 và lưu ngân sách hồ sơ riêng', async () => {
@@ -198,31 +198,6 @@ describe('Chọn model dịch', () => {
           profileLearningInterval: 12,
         }),
       ),
-    );
-  });
-  it('lưu chế độ toàn màn hình và cỡ chữ riêng', async () => {
-    const { save } = await openSettings();
-    fireEvent.click(screen.getByRole('checkbox', { name: 'settings.overlayFullscreen' }));
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.fullscreenFontSize' }), {
-      target: { value: '48' },
-    });
-    await vi.waitFor(() =>
-      expect(save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          overlayFullscreen: true,
-          overlayFullscreenFontSize: 48,
-          overlayFontSize: 28,
-        }),
-      ),
-    );
-  });
-  it('cho chỉnh và lưu thời gian tự ẩn overlay bằng giây', async () => {
-    const { save } = await openSettings();
-    const duration = screen.getByRole('spinbutton', { name: 'settings.overlayDuration' });
-    expect(duration.getAttribute('value')).toBe('5');
-    fireEvent.change(duration, { target: { value: '8' } });
-    await vi.waitFor(() =>
-      expect(save).toHaveBeenCalledWith(expect.objectContaining({ overlayDurationSeconds: 8 })),
     );
   });
   it('cho đổi ngưỡng lọc trùng và lưu 0 để tắt lọc', async () => {
@@ -332,4 +307,10 @@ it('Ollama và LM Studio có địa chỉ, hướng dẫn và cấu hình riêng
     screen.getByRole('textbox', { name: 'settings.lmStudioBaseUrl' }).getAttribute('placeholder'),
   ).toBe('http://localhost:1234/v1');
   expect(screen.getByText('settings.lmStudioHint')).toBeTruthy();
+});
+
+it('không còn cấu hình phụ đề nổi trong Cài đặt', async () => {
+  await openSettings();
+  expect(screen.queryByText('settings.overlay')).toBeNull();
+  expect(screen.queryByRole('checkbox', { name: 'settings.overlayFullscreen' })).toBeNull();
 });

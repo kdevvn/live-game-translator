@@ -34,6 +34,13 @@ export function Translation({
   const [overlayFontSize, setOverlayFontSize] = useState(
     String(snapshot.settings.overlayFullscreenFontSize),
   );
+  const [floatingFontSize, setFloatingFontSize] = useState(
+    String(snapshot.settings.overlayFontSize),
+  );
+  const [overlayDuration, setOverlayDuration] = useState(
+    String(snapshot.settings.overlayDurationSeconds),
+  );
+  const { run: runSettings, error: settingsError, busy: savingSettings } = useAction();
   const [overlayOpacity, setOverlayOpacity] = useState(snapshot.settings.overlayOpacity);
   const latestSettings = useRef(snapshot.settings);
   latestSettings.current = snapshot.settings;
@@ -53,7 +60,7 @@ export function Translation({
     if (!Object.keys(changes).length) return;
     settingsQueue.current = settingsQueue.current.then(async () => {
       const next = { ...latestSettings.current, ...savedChanges.current, ...changes };
-      const result = await run(() => window.app.settings(next));
+      const result = await runSettings(() => window.app.settings(next));
       if (result.ok) Object.assign(savedChanges.current, changes);
       else if (
         changes.overlayFullscreen !== undefined &&
@@ -80,6 +87,9 @@ export function Translation({
   const flushOnUnmount = useRef(() => {});
   flushOnUnmount.current = flushSettings;
   useEffect(() => () => flushOnUnmount.current(), []);
+  const previewFontSize = settingsSchema.shape.overlayFontSize.safeParse(
+    Number(overlayFullscreen ? overlayFontSize : floatingFontSize),
+  );
   const profileId = snapshot.session?.profileId ?? '';
   const profile = snapshot.profiles.find((item) => item.id === profileId);
   const history = [...snapshot.dialogues].reverse();
@@ -166,6 +176,145 @@ export function Translation({
       <ErrorNotice error={snapshot.error ?? error} />
       <div className="workspace-grid">
         <Capture snapshot={snapshot} />
+        <section className="overlay-settings" aria-labelledby="overlay-settings-title">
+          <div className="section-heading">
+            <div>
+              <h2 id="overlay-settings-title">{t('settings.overlay')}</h2>
+              <p className="muted small">{t('translation.overlaySettingsHint')}</p>
+            </div>
+            <span className="muted small" role="status">
+              {savingSettings ? <Loading /> : null}
+              {t(savingSettings ? 'translation.overlaySaving' : 'translation.overlayAutoSave')}
+            </span>
+          </div>
+          <div className="overlay-settings-layout">
+            <div className="overlay-settings-preview">
+              <p className="muted small">{t('translation.overlayPreview')}</p>
+              <div
+                className="subtitle-preview"
+                style={{
+                  fontSize: previewFontSize.success
+                    ? previewFontSize.data
+                    : overlayFullscreen
+                      ? snapshot.settings.overlayFullscreenFontSize
+                      : snapshot.settings.overlayFontSize,
+                  backgroundColor: `color-mix(in srgb, var(--subtitle-bg) ${overlayOpacity * 100}%, var(--ground))`,
+                }}
+              >
+                {t('settings.preview')}
+              </div>
+              <p className="muted small">
+                {t(
+                  overlayFullscreen
+                    ? 'translation.overlayFullscreenHint'
+                    : 'translation.overlayHint',
+                )}
+              </p>
+              {!overlayFullscreen && (
+                <button
+                  className="btn"
+                  type="button"
+                  onClick={() => {
+                    void run(() => window.app.overlay(!snapshot.overlayEditing));
+                  }}
+                >
+                  {t(snapshot.overlayEditing ? 'translation.overlayDone' : 'translation.overlay')}
+                </button>
+              )}
+            </div>
+            <div className="overlay-settings-fields">
+              <label className="check-row">
+                <input
+                  className="checkbox checkbox-sm"
+                  type="checkbox"
+                  checked={overlayFullscreen}
+                  onChange={(event) => {
+                    const enabled = event.target.checked;
+                    setOverlayFullscreen(enabled);
+                    updateSetting('overlayFullscreen', enabled, true);
+                  }}
+                />
+                {t('settings.overlayFullscreen')}
+              </label>
+              <Field label={t('settings.fontSize')} hint={t('translation.overlayFloatingFontHint')}>
+                <input
+                  type="number"
+                  required
+                  min={16}
+                  max={64}
+                  step={1}
+                  value={floatingFontSize}
+                  aria-invalid={
+                    !settingsSchema.shape.overlayFontSize.safeParse(Number(floatingFontSize))
+                      .success
+                  }
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setFloatingFontSize(value);
+                    updateSetting('overlayFontSize', value === '' ? NaN : Number(value));
+                  }}
+                />
+              </Field>
+              <Field
+                label={t('settings.fullscreenFontSize')}
+                hint={t('translation.overlayFullscreenFontHint')}
+              >
+                <input
+                  type="number"
+                  required
+                  min={16}
+                  max={64}
+                  step={1}
+                  aria-invalid={
+                    !settingsSchema.shape.overlayFullscreenFontSize.safeParse(
+                      Number(overlayFontSize),
+                    ).success
+                  }
+                  value={overlayFontSize}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setOverlayFontSize(value);
+                    updateSetting('overlayFullscreenFontSize', value === '' ? NaN : Number(value));
+                  }}
+                />
+              </Field>
+              <Field label={`${t('settings.opacity')} (${Math.round(overlayOpacity * 100)}%)`}>
+                <input
+                  className="range range-sm"
+                  type="range"
+                  min={40}
+                  max={100}
+                  value={overlayOpacity * 100}
+                  onChange={(event) => {
+                    const value = Number(event.target.value) / 100;
+                    setOverlayOpacity(value);
+                    updateSetting('overlayOpacity', value);
+                  }}
+                />
+              </Field>
+              <Field label={t('settings.overlayDuration')} hint={t('settings.overlayDurationHint')}>
+                <input
+                  type="number"
+                  required
+                  min={1}
+                  max={60}
+                  step={1}
+                  value={overlayDuration}
+                  aria-invalid={
+                    !settingsSchema.shape.overlayDurationSeconds.safeParse(Number(overlayDuration))
+                      .success
+                  }
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setOverlayDuration(value);
+                    updateSetting('overlayDurationSeconds', value === '' ? NaN : Number(value));
+                  }}
+                />
+              </Field>
+            </div>
+          </div>
+          <ErrorNotice error={settingsError} />
+        </section>
         <section className="recognition-panel" aria-label={t('shell.inspector')}>
           <div className="inspector-title">
             <h2>{t('shell.inspector')}</h2>
@@ -204,59 +353,6 @@ export function Translation({
             >
               {t('translation.manual')}
             </button>
-            {!snapshot.settings.overlayFullscreen && (
-              <button
-                type="button"
-                onClick={() => {
-                  void run(() => window.app.overlay(!snapshot.overlayEditing));
-                }}
-              >
-                {t(snapshot.overlayEditing ? 'translation.overlayDone' : 'translation.overlay')}
-              </button>
-            )}
-          </div>
-          <div className="inspector-section">
-            <h3>{t('settings.overlay')}</h3>
-            <label className="check-row">
-              <input
-                type="checkbox"
-                checked={overlayFullscreen}
-                onChange={(event) => {
-                  const enabled = event.target.checked;
-                  setOverlayFullscreen(enabled);
-                  updateSetting('overlayFullscreen', enabled, true);
-                }}
-              />
-              {t('settings.overlayFullscreen')}
-            </label>
-            <Field label={t('settings.fullscreenFontSize')}>
-              <input
-                type="number"
-                required
-                min={16}
-                max={64}
-                step={1}
-                value={overlayFontSize}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setOverlayFontSize(value);
-                  updateSetting('overlayFullscreenFontSize', value === '' ? NaN : Number(value));
-                }}
-              />
-            </Field>
-            <Field label={`${t('settings.opacity')} (${Math.round(overlayOpacity * 100)}%)`}>
-              <input
-                type="range"
-                min={40}
-                max={100}
-                value={overlayOpacity * 100}
-                onChange={(event) => {
-                  const value = Number(event.target.value) / 100;
-                  setOverlayOpacity(value);
-                  updateSetting('overlayOpacity', value);
-                }}
-              />
-            </Field>
           </div>
           <label className="check-row">
             <input

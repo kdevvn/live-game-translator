@@ -1482,8 +1482,7 @@ nav button.active {
   min-height: 40px;
 }
 #settings-form .settings-key,
-#settings-form .settings-model-actions,
-#settings-form .settings-overlay .check-row {
+#settings-form .settings-model-actions {
   grid-column: 1 / -1;
 }
 .settings-key {
@@ -1508,14 +1507,6 @@ nav button.active {
   min-width: 40px;
   height: 40px;
 }
-#settings-form .settings-overlay .check-row {
-  margin: 0;
-  min-height: 40px;
-}
-.settings-overlay .subtitle-preview {
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
 @media (max-width: 700px) {
   #settings-form > .settings-section {
     padding: 16px;
@@ -1531,5 +1522,76 @@ nav button.active {
 @media (prefers-reduced-motion: reduce) {
   .loading.loading-spinner {
     animation: none;
+  }
+}
+
+/* Phụ đề có vùng xem trước riêng; hai cột tùy chỉnh co về một cột ở cửa sổ hẹp. */
+.overlay-settings {
+  min-width: 0;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+}
+.overlay-settings > .section-heading {
+  align-items: start;
+  gap: 16px;
+}
+.overlay-settings .section-heading p {
+  margin: 6px 0 0;
+}
+.overlay-settings [role='status'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.overlay-settings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 24px;
+}
+.overlay-settings-preview {
+  min-width: 0;
+}
+.overlay-settings-preview > p:first-child {
+  margin-top: 0;
+}
+.overlay-settings .subtitle-preview {
+  margin-block: 8px 12px;
+  overflow-wrap: anywhere;
+}
+.overlay-settings-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+  align-content: start;
+}
+.overlay-settings-fields > .check-row {
+  grid-column: 1 / -1;
+  margin: 0;
+  min-height: 40px;
+}
+.overlay-settings-fields > .field {
+  align-content: start;
+  min-width: 0;
+  margin: 0;
+}
+.overlay-settings .field > input:not([type='range']) {
+  width: 100%;
+}
+@media (max-width: 900px) {
+  .overlay-settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .overlay-settings {
+    padding: 16px;
+  }
+  .overlay-settings > .section-heading {
+    flex-direction: column;
+  }
+  .overlay-settings-fields {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

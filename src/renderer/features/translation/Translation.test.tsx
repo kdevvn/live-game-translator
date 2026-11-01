@@ -62,6 +62,71 @@ describe('Token của từng lần dịch', () => {
     expect(select.value).toBe(previous.id);
     vi.unstubAllGlobals();
   });
+  it('gom đủ tùy chỉnh phụ đề, xem trước và hướng dẫn vị trí trong tab dịch', async () => {
+    const save = vi.fn().mockResolvedValue({ ok: true });
+    const overlay = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('app', { settings: save, overlay });
+    render(
+      <Translation
+        snapshot={{
+          settings: DEFAULT_SETTINGS,
+          resolvedTheme: 'light',
+          hasApiKey: false,
+          profiles: [DEFAULT_PROFILE],
+          sessions: [],
+          session: null,
+          status: 'idle',
+          dialogues: [],
+          ocrText: '',
+          error: null,
+          overlayEditing: false,
+          overlayText: '',
+          generation: 0,
+          sourceId: '',
+          sourceName: '',
+          region: DEFAULT_REGION,
+        }}
+      />,
+    );
+    expect(screen.getByText('translation.overlaySettingsHint')).toBeTruthy();
+    expect(screen.getByText('settings.preview')).toBeTruthy();
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.fontSize' }), {
+      target: { value: '36' },
+    });
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.overlayDuration' }), {
+      target: { value: '8' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'translation.overlay' }));
+    await vi.waitFor(() => expect(overlay).toHaveBeenCalledWith(true));
+    await vi.waitFor(() =>
+      expect(save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          overlayFontSize: 36,
+          overlayDurationSeconds: 8,
+        }),
+      ),
+    );
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.fontSize' }), {
+      target: { value: '100' },
+    });
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.overlayDuration' }), {
+      target: { value: '61' },
+    });
+    fireEvent.change(screen.getByRole('slider', { name: /settings.opacity/ }), {
+      target: { value: '75' },
+    });
+    cleanup();
+    await vi.waitFor(() =>
+      expect(save).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          overlayFontSize: 36,
+          overlayDurationSeconds: 8,
+          overlayOpacity: 0.75,
+        }),
+      ),
+    );
+    vi.unstubAllGlobals();
+  });
   it('tắt toàn màn hình áp dụng ngay khi bỏ chọn', async () => {
     const save = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal('app', { settings: save });

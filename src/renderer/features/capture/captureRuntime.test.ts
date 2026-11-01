@@ -84,6 +84,103 @@ afterEach(() => {
 });
 
 describe('Luồng OCR capture', () => {
+  it('bật và dừng 20 lần không giữ timer, video hoặc OCR của phiên đã dừng', async () => {
+    vi.useFakeTimers();
+    worker.recognize.mockImplementation(() => new Promise(() => undefined));
+    window.captureBridge.command = async () => ({ ok: true, value: { action: 'stop' } });
+    cleanup = initializeCapture();
+    await vi.advanceTimersByTimeAsync(0);
+    for (let generation = 1; generation <= 20; generation++) {
+      receive({ ...command, generation });
+      await vi.advanceTimersByTimeAsync(0);
+      receive({ action: 'stop' });
+      expect(vi.getTimerCount()).toBe(0);
+      expect(document.querySelector('video')?.srcObject).toBeNull();
+    }
+    expect(stopTrack).toHaveBeenCalledTimes(20);
+    expect(worker.dispose).toHaveBeenCalledTimes(20);
+    expect(worker.recognize).toHaveBeenCalledTimes(20);
+    expect(result).not.toHaveBeenCalled();
+  });
+
+  it('IPC báo lỗi bị từ chối vẫn dừng capture và không để Promise lỗi không xử lý', async () => {
+    vi.useFakeTimers();
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    window.captureBridge.error = vi.fn().mockRejectedValue(new Error('IPC'));
+    worker.recognize.mockRejectedValue(new Error('OCR'));
+    cleanup = initializeCapture();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(stopTrack).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(0);
+    expect(log).toHaveBeenCalledTimes(1);
+  });
+
+  it('preview chưa phát phải mở lại có kiểm soát, lỗi play cũ không đóng nguồn mới', async () => {
+    vi.useFakeTimers();
+    let rejectPlay: (error: Error) => void = () => undefined;
+    vi.mocked(HTMLMediaElement.prototype.play).mockImplementationOnce(
+      () => new Promise<void>((_, reject) => (rejectPlay = reject)),
+    );
+    worker.recognize.mockImplementation(() => new Promise(() => undefined));
+    window.captureBridge.command = async () => ({ ok: true, value: { action: 'stop' } });
+    cleanup = initializeCapture();
+    await vi.advanceTimersByTimeAsync(0);
+    receive({ action: 'preview', sourceId: command.sourceId, generation: 1 });
+    await vi.advanceTimersByTimeAsync(0);
+    receive({ ...command, generation: 2, previewGeneration: 1 });
+    await vi.advanceTimersByTimeAsync(0);
+    const stops = stopTrack.mock.calls.length;
+    rejectPlay(new Error('CAPTURE'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(getDisplayMedia).toHaveBeenCalledTimes(2);
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(2);
+    expect(stopTrack).toHaveBeenCalledTimes(stops);
+    expect(window.captureBridge.error).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(1);
+  });
+
+  it('lỗi OCR giải phóng nguồn ngay cả khi IPC báo lỗi không phản hồi', async () => {
+    vi.useFakeTimers();
+    worker.recognize.mockRejectedValue(new Error('OCR'));
+    window.captureBridge.error = vi.fn(() => new Promise(() => undefined));
+    cleanup = initializeCapture();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(window.captureBridge.error).toHaveBeenCalledWith('OCR', 1);
+    expect(stopTrack).toHaveBeenCalledTimes(1);
+    expect(worker.dispose).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('video')?.srcObject).toBeNull();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('IPC báo lỗi trả muộn không dừng stream của nguồn mới', async () => {
+    vi.useFakeTimers();
+    let finish: () => void = () => undefined;
+    window.captureBridge.error = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
+    worker.recognize.mockRejectedValueOnce(new Error('OCR'));
+    worker.recognize.mockImplementation(() => new Promise(() => undefined));
+    cleanup = initializeCapture();
+    await vi.advanceTimersByTimeAsync(0);
+    receive({ ...command, sourceId: 'window:2', generation: 2 });
+    await vi.advanceTimersByTimeAsync(0);
+    const stops = stopTrack.mock.calls.length;
+    finish();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(stopTrack).toHaveBeenCalledTimes(stops);
+    expect(document.querySelector('video')?.srcObject).not.toBeNull();
+    expect(vi.getTimerCount()).toBe(1);
+  });
+
+  it('lỗi mở video giải phóng track trước khi chờ IPC báo lỗi', async () => {
+    vi.useFakeTimers();
+    vi.mocked(HTMLMediaElement.prototype.play).mockRejectedValueOnce(new Error('CAPTURE'));
+    window.captureBridge.error = vi.fn(() => new Promise(() => undefined));
+    cleanup = initializeCapture();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(window.captureBridge.error).toHaveBeenCalledWith('CAPTURE', 1);
+    expect(stopTrack).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('video')?.srcObject).toBeNull();
+  });
+
   it('tạm dừng giữa lúc trao SDP vẫn gửi offer cho kết nối video đang mở', async () => {
     vi.useFakeTimers();
     worker.recognize.mockImplementation(() => new Promise(() => undefined));
