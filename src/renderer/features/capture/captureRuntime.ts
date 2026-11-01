@@ -38,6 +38,7 @@ export function initializeCapture(): () => void {
   const bridge = window.captureBridge;
   let token = 0;
   let stream: MediaStream | null = null;
+  let videoReady = false;
   let worker: OcrEngine | null = null;
   let timer: ReturnType<typeof setInterval> | undefined;
   let active: Extract<CaptureCommand, { action: 'start' | 'preview' }> | null = null;
@@ -106,7 +107,17 @@ export function initializeCapture(): () => void {
     previewId = '';
     stream?.getTracks().forEach((track) => track.stop());
     stream = null;
+    videoReady = false;
     video.srcObject = null;
+    canvas.width = canvas.height = 0;
+    processing.width = processing.height = 0;
+  }
+  /** Dừng tài nguyên trước IPC; phản hồi muộn không được chạm vào nguồn mới. */
+  function fail(code: 'CAPTURE' | 'OCR', generation: number): void {
+    stop();
+    void bridge.error(code, generation).catch(() => {
+      console.error('Không thể báo lỗi capture; tài nguyên đã được giải phóng.');
+    });
   }
   /** Tạo dấu ảnh lấy mẫu thưa để tránh OCR lại khi vùng chữ không đổi. */
   function fingerprint(context: CanvasRenderingContext2D, width: number, height: number): string {
@@ -152,8 +163,7 @@ export function initializeCapture(): () => void {
         lastTime = video.currentTime;
         lastAdvance = Date.now();
       } else if (Date.now() - lastAdvance > STALE_FRAME_MS) {
-        await bridge.error('CAPTURE', current.generation);
-        stop();
+        fail('CAPTURE', current.generation);
         return;
       }
       const context = draw(current.region);
@@ -193,8 +203,7 @@ export function initializeCapture(): () => void {
       await bridge.result({ generation: current.generation, text: lastText, ms: lastMs, manual });
     } catch {
       if (currentToken === token) {
-        await bridge.error('OCR', current.generation);
-        stop();
+        fail('OCR', current.generation);
       }
     } finally {
       if (currentToken === token && ownsWorker) {
@@ -212,7 +221,7 @@ export function initializeCapture(): () => void {
   async function start(
     command: Extract<CaptureCommand, { action: 'start' | 'preview' }>,
   ): Promise<void> {
-    const reuse = active?.sourceId === command.sourceId && stream !== null;
+    const reuse = active?.sourceId === command.sourceId && stream !== null && videoReady;
     if (!reuse) stop();
     else if (active?.action === 'start') stopOcr();
     active = command;
@@ -239,13 +248,14 @@ export function initializeCapture(): () => void {
         await video.play();
       }
       if (currentToken !== token) return;
+      videoReady = true;
       if (!reuse)
         stream.getVideoTracks()[0].addEventListener(
           'ended',
           () => {
             if (stream === nextStream) {
-              if (active) void bridge.error('CAPTURE', active.generation);
-              stop();
+              if (active) fail('CAPTURE', active.generation);
+              else stop();
             }
           },
           { once: true },
@@ -278,8 +288,7 @@ export function initializeCapture(): () => void {
             id,
             message: { type: 'unavailable' },
           });
-        await bridge.error(nextWorker ? 'OCR' : 'CAPTURE', command.generation);
-        stop();
+        fail(nextWorker ? 'OCR' : 'CAPTURE', command.generation);
       } else nextWorker?.dispose();
     }
   }

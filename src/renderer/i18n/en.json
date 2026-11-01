@@ -1,4 +1,9 @@
 {
+  "field": {
+    "range": "Range: {{min}}–{{max}}.",
+    "minimum": "Minimum: {{min}}.",
+    "maximum": "Maximum: {{max}}."
+  },
   "app": {
     "name": "Live Game Translator",
     "subtitle": "Stay with the story",
@@ -107,6 +112,9 @@
     "overlay": "Adjust subtitle overlay",
     "overlayDone": "Lock subtitle position",
     "closeFullscreenOverlay": "Close fullscreen overlay",
+    "overlaySettingsHint": "Adjust subtitle appearance right where you translate.",
+    "overlayPreview": "Appearance preview",
+    "overlayFullscreenHint": "Subtitles cover the full screen. Turn this off to move the floating subtitle window.",
     "overlayHint": "Drag to move. Lock again to click through the subtitles.",
     "profile": "Game profile",
     "newSession": "New session",

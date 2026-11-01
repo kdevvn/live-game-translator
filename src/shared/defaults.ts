@@ -1,5 +1,7 @@
 import type { AppSettings, CaptureRegion, GameProfile } from './types';
 
+export const OVERLAY_FONT_SIZE_MAX = 100;
+
 export const PROFILE_INPUT_TOKEN_LIMIT_MIN = 1000;
 export const PROFILE_INPUT_TOKEN_LIMIT_MAX = 1000000;
 

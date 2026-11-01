@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import { PROFILE_INPUT_TOKEN_LIMIT_MIN, PROFILE_INPUT_TOKEN_LIMIT_MAX } from './defaults';
+import {
+  OVERLAY_FONT_SIZE_MAX,
+  PROFILE_INPUT_TOKEN_LIMIT_MIN,
+  PROFILE_INPUT_TOKEN_LIMIT_MAX,
+} from './defaults';
 
 /** Vùng chữ tương đối so với kích thước nội dung video, trong khoảng 0-1. */
 export const regionSchema = z
@@ -65,10 +69,10 @@ export const settingsSchema = z.object({
   duplicateThreshold: z.number().int().min(0).max(100),
   translateShortcut: z.string().min(1).max(100),
   pauseShortcut: z.string().min(1).max(100),
-  overlayFontSize: z.number().int().min(16).max(64),
+  overlayFontSize: z.number().int().min(16).max(OVERLAY_FONT_SIZE_MAX),
   /** Chế độ phủ màn hình và cỡ chữ độc lập của chế độ này. */
   overlayFullscreen: z.boolean(),
-  overlayFullscreenFontSize: z.number().int().min(16).max(64),
+  overlayFullscreenFontSize: z.number().int().min(16).max(OVERLAY_FONT_SIZE_MAX),
   overlayOpacity: z.number().min(0.4).max(1),
   /** Thời gian hiện sau lần cập nhật caption cuối, tính bằng giây. */
   overlayDurationSeconds: z.number().int().min(1).max(60),

@@ -628,7 +628,7 @@ summary {
 }
 .settings-section {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--gap);
   padding: 16px 0;
   border-top: 1px solid var(--panel-border);
@@ -1482,8 +1482,7 @@ nav button.active {
   min-height: 40px;
 }
 #settings-form .settings-key,
-#settings-form .settings-model-actions,
-#settings-form .settings-overlay .check-row {
+#settings-form .settings-model-actions {
   grid-column: 1 / -1;
 }
 .settings-key {
@@ -1508,14 +1507,6 @@ nav button.active {
   min-width: 40px;
   height: 40px;
 }
-#settings-form .settings-overlay .check-row {
-  margin: 0;
-  min-height: 40px;
-}
-.settings-overlay .subtitle-preview {
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
 @media (max-width: 700px) {
   #settings-form > .settings-section {
     padding: 16px;
@@ -1532,4 +1523,108 @@ nav button.active {
   .loading.loading-spinner {
     animation: none;
   }
+}
+
+/* Xem trước phụ đề chiếm một hàng riêng; tùy chỉnh bên dưới co về một cột ở cửa sổ hẹp. */
+.overlay-settings {
+  min-width: 0;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+}
+.overlay-settings > .section-heading {
+  align-items: start;
+  gap: 16px;
+}
+.overlay-settings .section-heading p {
+  margin: 6px 0 0;
+}
+.overlay-settings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+.overlay-settings-preview {
+  min-width: 0;
+}
+.overlay-settings-preview > p:first-child {
+  margin-top: 0;
+}
+.overlay-settings .subtitle-preview {
+  margin-block: 8px 12px;
+  overflow-wrap: anywhere;
+}
+.overlay-settings-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+  align-content: start;
+}
+.overlay-settings-fields > .check-row {
+  grid-column: 1 / -1;
+  margin: 0;
+  min-height: 40px;
+}
+.overlay-settings-fields > .field {
+  align-content: start;
+  min-width: 0;
+  margin: 0;
+}
+.overlay-settings .field > input:not([type='range']) {
+  width: 100%;
+}
+@media (max-width: 640px) {
+  .overlay-settings {
+    padding: 16px;
+  }
+  .overlay-settings > .section-heading {
+    flex-direction: column;
+  }
+  .overlay-settings-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* CSS ô nhập chung không được làm mất dấu tích hoặc tăng độ dày thanh kéo DaisyUI. */
+.overlay-settings input.checkbox {
+  width: 18px;
+  height: 18px;
+  padding: 3px;
+  border-radius: var(--control-radius);
+  box-shadow: none;
+}
+.overlay-settings input.checkbox:checked {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+.overlay-settings input.range {
+  --range-thumb-size: 18px;
+  --range-bg: var(--control);
+  --range-thumb: var(--surface);
+  --range-progress: var(--primary);
+  --range-fill: 0;
+  width: 100%;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+}
+.overlay-settings input.range::-webkit-slider-runnable-track {
+  height: 6px;
+}
+.overlay-settings input.range::-moz-range-track {
+  height: 6px;
+}
+.overlay-settings input.range::-webkit-slider-thumb {
+  border-width: 2px;
+  border-radius: 50%;
+  box-shadow: none;
+}
+.overlay-settings input.range::-moz-range-thumb {
+  border-width: 2px;
+  border-radius: 50%;
+  box-shadow: none;
 }

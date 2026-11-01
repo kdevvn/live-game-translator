@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_SETTINGS } from './defaults';
 import { getOverlayText, shouldShowOverlay } from './overlay';
+import { settingsSchema } from './types';
 import type { Dialogue } from './types';
 
 describe('Nội dung phụ đề nổi', () => {
@@ -80,3 +81,13 @@ describe('Nội dung phụ đề nổi', () => {
     expect(getOverlayText({ ...state, ocrText: '' })).toBe('');
   });
 });
+
+it.each(['overlayFontSize', 'overlayFullscreenFontSize'] as const)(
+  'cho phép %s đến 100 px và từ chối giá trị vượt giới hạn',
+  (field) => {
+    expect(settingsSchema.shape[field].safeParse(100).success).toBe(true);
+    expect(settingsSchema.shape[field].safeParse(101).success).toBe(false);
+    expect(settingsSchema.shape[field].safeParse(16).success).toBe(true);
+    expect(settingsSchema.shape[field].safeParse(15).success).toBe(false);
+  },
+);
