@@ -26,21 +26,52 @@ try {
           return saved.ok && saved.value.settings.overlayDurationSeconds;
         })
         .toBe(8);
-      const floatingSize = panel.getByRole('spinbutton', {
+      const fontSize = panel.getByRole('spinbutton', {
         name: labels.settings.fontSize,
         exact: true,
       });
-      const fullscreenSize = panel.getByRole('spinbutton', {
-        name: labels.settings.fullscreenFontSize,
-        exact: true,
-      });
-      await floatingSize.fill('36');
+      await expect(panel.getByRole('spinbutton')).toHaveCount(2);
+      await fontSize.fill('36');
       await expect(panel.locator('.subtitle-preview')).toHaveCSS('font-size', '36px');
-      await panel.getByRole('checkbox').check();
-      await fullscreenSize.fill('44');
+      const fullscreen = panel.getByRole('checkbox');
+      await fullscreen.focus();
+      await fullscreen.press('Space');
+      await expect(fullscreen).toBeChecked();
+      await expect(fontSize).toHaveValue('28');
+      await fontSize.fill('44');
       await expect(panel.locator('.subtitle-preview')).toHaveCSS('font-size', '44px');
-      await panel.getByRole('checkbox').uncheck();
+      await expect
+        .poll(() =>
+          fullscreen.evaluate((element) => {
+            const mark = window.getComputedStyle(element, '::before');
+            return (
+              Number(mark.opacity) === 1 &&
+              parseFloat(mark.width) >= 8 &&
+              parseFloat(mark.height) >= 8
+            );
+          }),
+        )
+        .toBe(true);
+      await expect
+        .poll(async () => {
+          const saved = await page.evaluate(() => window.app.snapshot());
+          return saved.ok && saved.value.settings.overlayFullscreen;
+        })
+        .toBe(true);
+      await panel.screenshot({ path: `${folder}/${locale}-${theme}-checked.png` });
+      await fullscreen.uncheck();
+      await expect(fullscreen).not.toBeChecked();
+      await expect(fontSize).toHaveValue('36');
       await expect(panel.locator('.subtitle-preview')).toHaveCSS('font-size', '36px');
+      await panel.getByRole('slider').focus();
+      await panel.getByRole('slider').press('ArrowLeft');
+      await expect
+        .poll(async () => {
+          const saved = await page.evaluate(() => window.app.snapshot());
+          return saved.ok && saved.value.settings.overlayOpacity;
+        })
+        .toBe(0.84);
+      await expect(panel.getByRole('status')).toHaveCount(0);
       for (const width of [1440, 768, 390]) {
         await page.setViewportSize({ width, height: 1000 });
         if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth))

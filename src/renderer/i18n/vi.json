@@ -1,4 +1,9 @@
 {
+  "field": {
+    "range": "Giới hạn: {{min}}–{{max}}.",
+    "minimum": "Tối thiểu: {{min}}.",
+    "maximum": "Tối đa: {{max}}."
+  },
   "app": {
     "name": "Live Game Translator",
     "subtitle": "Không bỏ lỡ một lời thoại",
@@ -107,13 +112,9 @@
     "overlay": "Chỉnh phụ đề nổi",
     "overlayDone": "Khóa vị trí phụ đề",
     "closeFullscreenOverlay": "Tắt overlay toàn màn hình",
-    "overlayFloatingFontHint": "16–64 px. Dùng khi tắt toàn màn hình.",
-    "overlayFullscreenFontHint": "16–64 px. Dùng khi bật toàn màn hình.",
     "overlaySettingsHint": "Chỉnh cách hiển thị phụ đề ngay tại nơi bạn dịch.",
     "overlayPreview": "Xem trước kiểu chữ",
     "overlayFullscreenHint": "Phụ đề phủ toàn màn hình. Tắt chế độ này để kéo và chỉnh vị trí cửa sổ phụ đề.",
-    "overlaySaving": "Đang lưu…",
-    "overlayAutoSave": "Tự động lưu thay đổi",
     "overlayHint": "Kéo để di chuyển. Khóa lại để bấm xuyên qua phụ đề.",
     "profile": "Hồ sơ game",
     "newSession": "Phiên mới",

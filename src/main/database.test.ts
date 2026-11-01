@@ -108,12 +108,16 @@ describe('Lưu dữ liệu và migration', () => {
         overlayFullscreen: false,
         overlayFullscreenFontSize: 28,
       });
-      db.saveSettings({ ...db.settings(), overlayFullscreen: true, overlayFullscreenFontSize: 48 });
+      db.saveSettings({
+        ...db.settings(),
+        overlayFullscreen: true,
+        overlayFullscreenFontSize: 100,
+      });
       expect(db.settings()).toMatchObject({
         overlayFullscreen: true,
-        overlayFullscreenFontSize: 48,
+        overlayFullscreenFontSize: 100,
       });
-      for (const overlayFullscreenFontSize of [15, 65, 1.5, NaN])
+      for (const overlayFullscreenFontSize of [15, 101, 1.5, NaN])
         expect(
           settingsSchema.safeParse({ ...DEFAULT_SETTINGS, overlayFullscreenFontSize }).success,
         ).toBe(false);

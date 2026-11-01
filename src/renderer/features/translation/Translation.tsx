@@ -2,6 +2,7 @@ import { Loading } from '../../components/Loading';
 import { effectiveModel, hasProviderAccess } from '../../../shared/modelSettings';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { OVERLAY_FONT_SIZE_MAX } from '../../../shared/defaults';
 import { settingsSchema } from '../../../shared/types';
 import type { AppSettings, Dialogue, SessionSnapshot } from '../../../shared/types';
 import { Capture } from '../capture/Capture';
@@ -40,7 +41,7 @@ export function Translation({
   const [overlayDuration, setOverlayDuration] = useState(
     String(snapshot.settings.overlayDurationSeconds),
   );
-  const { run: runSettings, error: settingsError, busy: savingSettings } = useAction();
+  const { run: runSettings, error: settingsError } = useAction();
   const [overlayOpacity, setOverlayOpacity] = useState(snapshot.settings.overlayOpacity);
   const latestSettings = useRef(snapshot.settings);
   latestSettings.current = snapshot.settings;
@@ -182,10 +183,6 @@ export function Translation({
               <h2 id="overlay-settings-title">{t('settings.overlay')}</h2>
               <p className="muted small">{t('translation.overlaySettingsHint')}</p>
             </div>
-            <span className="muted small" role="status">
-              {savingSettings ? <Loading /> : null}
-              {t(savingSettings ? 'translation.overlaySaving' : 'translation.overlayAutoSave')}
-            </span>
           </div>
           <div className="overlay-settings-layout">
             <div className="overlay-settings-preview">
@@ -236,51 +233,29 @@ export function Translation({
                 />
                 {t('settings.overlayFullscreen')}
               </label>
-              <Field label={t('settings.fontSize')} hint={t('translation.overlayFloatingFontHint')}>
+              <Field label={t('settings.fontSize')}>
                 <input
                   type="number"
                   required
                   min={16}
-                  max={64}
+                  max={OVERLAY_FONT_SIZE_MAX}
                   step={1}
-                  value={floatingFontSize}
-                  aria-invalid={
-                    !settingsSchema.shape.overlayFontSize.safeParse(Number(floatingFontSize))
-                      .success
-                  }
+                  value={overlayFullscreen ? overlayFontSize : floatingFontSize}
+                  aria-invalid={!previewFontSize.success}
                   onChange={(event) => {
                     const value = event.target.value;
-                    setFloatingFontSize(value);
-                    updateSetting('overlayFontSize', value === '' ? NaN : Number(value));
-                  }}
-                />
-              </Field>
-              <Field
-                label={t('settings.fullscreenFontSize')}
-                hint={t('translation.overlayFullscreenFontHint')}
-              >
-                <input
-                  type="number"
-                  required
-                  min={16}
-                  max={64}
-                  step={1}
-                  aria-invalid={
-                    !settingsSchema.shape.overlayFullscreenFontSize.safeParse(
-                      Number(overlayFontSize),
-                    ).success
-                  }
-                  value={overlayFontSize}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    setOverlayFontSize(value);
-                    updateSetting('overlayFullscreenFontSize', value === '' ? NaN : Number(value));
+                    if (overlayFullscreen) setOverlayFontSize(value);
+                    else setFloatingFontSize(value);
+                    updateSetting(
+                      overlayFullscreen ? 'overlayFullscreenFontSize' : 'overlayFontSize',
+                      value === '' ? NaN : Number(value),
+                    );
                   }}
                 />
               </Field>
               <Field label={`${t('settings.opacity')} (${Math.round(overlayOpacity * 100)}%)`}>
                 <input
-                  className="range range-sm"
+                  className="range range-xs"
                   type="range"
                   min={40}
                   max={100}
