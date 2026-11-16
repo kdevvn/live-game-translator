@@ -8,7 +8,6 @@ import type { ProfileEnrichment } from '../../shared/types';
 const emptyFacts: ProfileEnrichment = {
   characters: [],
   relationships: [],
-  glossary: [],
   evidence: 'Chưa có dữ kiện chắc chắn',
 };
 
@@ -34,10 +33,6 @@ describe('Vòng đời tác vụ hồ sơ', () => {
                         self: 'tôi / ta',
                         address: 'em hoặc con',
                       },
-                    ],
-                    glossary: [
-                      { source: 'Gate', target: 'Cổng' },
-                      { source: 'Alice', target: 'Alice' },
                     ],
                     evidence: 'Hội thoại',
                   }),
@@ -73,7 +68,6 @@ describe('Vòng đời tác vụ hồ sơ', () => {
       expect(profile.characters).toEqual([
         expect.objectContaining({ name: 'Alice', aliases: 'Ally' }),
       ]);
-      expect(profile.glossary).toEqual([{ source: 'Gate', target: 'Cổng' }]);
       expect(profile.relationships).toEqual([
         { speaker: 'Alice', listener: 'Bob', self: 'tôi', address: 'em' },
       ]);
@@ -290,7 +284,7 @@ describe('Vòng đời tác vụ hồ sơ', () => {
     });
     const app = new SessionController(db, api, () => undefined);
     try {
-      db.saveProfile({ ...DEFAULT_PROFILE, id: 'game', name: 'Game' });
+      db.saveProfile({ ...DEFAULT_PROFILE, id: 'game', name: 'Game', speakerDisplay: 'none' });
       app.updateSettings({
         ...DEFAULT_SETTINGS,
         model: 'translation',
@@ -375,10 +369,13 @@ describe('Vòng đời tác vụ hồ sơ', () => {
       db.saveProfile({ ...profile, aiEnabled: false });
       app.profileChanged('game');
       expect(enrich.mock.calls[0][2].aborted).toBe(true);
-      finish({ ...emptyFacts, glossary: [{ source: 'Gate', target: 'Response muộn' }] });
+      finish({
+        ...emptyFacts,
+        relationships: [{ speaker: 'Alice', listener: 'Bob', self: 'tôi', address: 'cậu' }],
+      });
       await new Promise((resolve) => setImmediate(resolve));
       expect(db.profiles().find((item) => item.id === 'game')?.instructions).toBe('');
-      expect(db.profiles().find((item) => item.id === 'game')?.glossary).toEqual([]);
+      expect(db.profiles().find((item) => item.id === 'game')?.relationships).toEqual([]);
       expect(db.profileInitialized('game')).toBe(false);
     } finally {
       app.stop();

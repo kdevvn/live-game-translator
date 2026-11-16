@@ -29,6 +29,55 @@ const snapshot: SessionSnapshot = {
 
 describe('Phụ đề nổi khi chưa có chữ', () => {
   it.each([false, true])(
+    'tên đứng đầu câu dịch trong cùng đoạn văn, toàn màn hình: %s',
+    (fullscreen) => {
+      const translated = {
+        id: 'd',
+        sessionId: 's',
+        sequence: 1,
+        text: 'Everybody, we’re safe now.',
+        translation: 'Mọi người, chúng ta an toàn rồi.',
+        speaker: 'Dutch',
+        listener: 'unknown',
+        status: 'translated' as const,
+        createdAt: 0,
+        ocrMs: 0,
+        apiMs: 0,
+      };
+      const state = {
+        ...snapshot,
+        hasApiKey: true,
+        settings: { ...DEFAULT_SETTINGS, model: 'test', overlayFullscreen: fullscreen },
+        overlayText: translated.translation,
+        dialogues: [translated],
+      };
+      const { container, rerender } = render(<Overlay snapshot={state} />);
+      const paragraph = container.querySelector('.overlay-caption p');
+      expect(paragraph?.firstElementChild?.textContent).toBe('Dutch');
+      expect(paragraph?.textContent).toBe(`Dutch ${translated.translation}`);
+      rerender(
+        <Overlay
+          snapshot={{
+            ...state,
+            overlayText: 'Mọi',
+            dialogues: [{ ...translated, status: 'pending', translation: 'Mọi' }],
+          }}
+        />,
+      );
+      expect(container.querySelector('.subtitle-speaker')?.textContent).toBe('Dutch');
+      expect(container.querySelector('.overlay-caption p')?.textContent).toBe('Dutch Mọi');
+      rerender(
+        <Overlay snapshot={{ ...state, dialogues: [{ ...translated, speaker: 'unknown' }] }} />,
+      );
+      expect(container.querySelector('.overlay-caption p')?.textContent).toBe(
+        translated.translation,
+      );
+      expect(container.querySelector('.subtitle-speaker')).toBeNull();
+      rerender(<Overlay snapshot={{ ...state, overlayText: '' }} />);
+      expect(container.querySelector('.overlay-caption p')?.textContent).toBe('');
+    },
+  );
+  it.each([false, true])(
     'caption trống, không chèn hướng dẫn khi đã cấu hình dịch: %s',
     (configured) => {
       const { container } = render(

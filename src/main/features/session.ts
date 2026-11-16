@@ -9,14 +9,16 @@ import type {
   SessionSnapshot,
 } from '../../shared/types';
 import {
+  DEFAULT_PROFILE,
   DEFAULT_REGION,
   INPUT_TOKEN_LIMIT,
   QUEUE_LIMIT,
   STABLE_TEXT_MS,
   SUMMARY_INTERVAL,
 } from '../../shared/defaults';
-import { TextStabilizer, TranslationQueue, normalizeText, isSimilarText } from './translation';
-import { buildMessages, cacheKey } from './context';
+import { TextStabilizer, TranslationQueue, isSimilarText } from './translation';
+import { normalizeOcrText } from '../../shared/ocrText';
+import { buildMessages, cacheKey, finalizeSpeakerTranslation, splitSpeakerText } from './context';
 import type { OpenRouter } from './openRouter';
 import { backgroundInputLimit } from './openRouter';
 import { getOverlayText } from '../../shared/overlay';
@@ -181,6 +183,7 @@ export class SessionController {
       this.stop('paused');
     if (
       effectiveModel(value, 'summary') !== effectiveModel(this.state.settings, 'summary') ||
+      value.summaryEnabled !== this.state.settings.summaryEnabled ||
       budgetChanged
     ) {
       this.summaryTask?.abort();
@@ -193,7 +196,7 @@ export class SessionController {
     this.state.settings = value;
     this.emit();
     this.profileTasks.wake();
-    if (this.state.status === 'running') void this.summarize();
+    void this.summarize();
   }
   /** Lưu giới hạn thực của model để chừa chỗ cho output và metadata nhà cung cấp. */
   setModelLimit(contextLength: number | undefined): void {
@@ -301,6 +304,7 @@ export class SessionController {
       if (d.status === 'pending') {
         d.status = 'cancelled';
         d.translation = '';
+        d.speaker = 'unknown';
         this.db.saveDialogue(d);
       }
     this.stabilizer = new TextStabilizer(STABLE_TEXT_MS);
@@ -330,20 +334,20 @@ export class SessionController {
       !['starting', 'running'].includes(this.state.status)
     )
       return;
-    this.state.ocrText = normalizeText(text);
+    this.state.ocrText = this.normalizeOcrInput(text);
     if (!this.state.ocrText) this.duplicateAnchor = null;
     this.state.status = 'running';
     if (this.state.ocrText && !isTranslatableText(this.state.ocrText)) {
       this.emit();
       return;
     }
-    const stable = this.stabilizer.accept(text, Date.now(), manual);
+    const stable = this.stabilizer.accept(this.state.ocrText, Date.now(), manual);
     if (
       hasProviderAccess(this.state.settings, this.state.hasApiKey) &&
       effectiveModel(this.state.settings) &&
       (manual || (stable && this.state.settings.autoTranslate))
     )
-      this.enqueue(manual ? text : (stable ?? ''), ms, manual);
+      this.enqueue(manual ? this.state.ocrText : (stable ?? ''), ms, manual);
     this.emit();
   }
   /** Dịch lại đoạn lỗi theo ngữ cảnh hiện tại bằng một đoạn mới có thứ tự mới. */
@@ -377,12 +381,17 @@ export class SessionController {
     this.state.overlayEditing = editing;
     this.emit();
   }
+  /** Ghép các dòng OCR theo hồ sơ hiện tại trước khi ổn định chữ, hiển thị và lưu lịch sử. */
+  private normalizeOcrInput(text: string): string {
+    const profile = this.state.profiles.find((item) => item.id === this.state.session?.profileId);
+    return normalizeOcrText(text, profile?.speakerDisplay ?? DEFAULT_PROFILE.speakerDisplay);
+  }
   /**
    * Lọc câu tự động theo mốc đã chấp nhận rồi thêm vào hàng đợi hữu hạn.
    * Câu bị bỏ không đổi mốc; force bỏ lọc gần giống nhưng vẫn chặn trùng nguyên văn đang pending.
    */
   private enqueue(input: string, ocrMs: number, force = false): void {
-    const text = normalizeText(input);
+    const text = this.normalizeOcrInput(input);
     if (!isTranslatableText(text) || !this.state.session) return;
     const last = this.state.dialogues.at(-1);
     if (last?.status === 'pending' && last.text === text) return;
@@ -426,18 +435,18 @@ export class SessionController {
     const session = this.state.session;
     const profile = this.state.profiles.find((p) => p.id === session?.profileId);
     if (!session || !profile) return;
+    d.speaker = splitSpeakerText(profile, d.text).speaker ?? 'unknown';
     const start = Date.now();
     d.queueMs = Math.max(0, start - d.createdAt);
     let lastPreview = -Infinity;
     try {
       const messages = buildMessages(
         profile,
-        session.summary,
+        this.state.settings.summaryEnabled ? session.summary : '',
         this.state.dialogues.filter((h) => h.sequence < d.sequence),
         d.text,
         this.modelLimit,
         this.api.translationFormatInstruction(effectiveModel(this.state.settings)),
-        this.state.settings.provider !== 'openRouter',
       );
       const key = cacheKey(
         d.text,
@@ -446,30 +455,33 @@ export class SessionController {
         JSON.stringify({ provider: providerIdentity(this.state.settings), messages }),
       );
       const cached = this.db.cache(key);
-      const result =
+      const response =
         cached ??
         (await this.api.translate(
           effectiveModel(this.state.settings),
           messages,
           signal,
-          (text) => {
-            if (
-              signal.aborted ||
-              generation !== this.state.generation ||
-              !text ||
-              text === d.translation
-            )
-              return;
+          (text, speaker) => {
+            if (signal.aborted || generation !== this.state.generation || !text) return;
+            const draft = finalizeSpeakerTranslation(profile, d.text, {
+              translation: text,
+              speaker: speaker ?? d.speaker,
+              listener: 'unknown',
+            });
+            const speakerChanged = draft.speaker !== d.speaker;
+            if (draft.translation === d.translation && !speakerChanged) return;
             const now = Date.now();
             d.firstTextMs ??= Math.max(0, now - start);
-            if (now - lastPreview < TRANSLATION_PREVIEW_INTERVAL_MS) return;
+            if (!speakerChanged && now - lastPreview < TRANSLATION_PREVIEW_INTERVAL_MS) return;
             lastPreview = now;
-            d.translation = text;
+            d.translation = draft.translation;
+            d.speaker = draft.speaker;
             this.emit();
           },
           session.id,
         ));
       if (signal.aborted || generation !== this.state.generation) return;
+      const result = finalizeSpeakerTranslation(profile, d.text, response);
       if (!cached) this.db.putCache(key, result);
       Object.assign(d, result, { status: 'translated', apiMs: Date.now() - start });
       if (cached) {
@@ -482,6 +494,7 @@ export class SessionController {
       if (signal.aborted || generation !== this.state.generation) return;
       d.status = 'error';
       d.translation = '';
+      d.speaker = 'unknown';
       d.apiMs = Date.now() - start;
       d.error = errorCode(error);
       this.state.error = errorCode(error);
@@ -494,8 +507,13 @@ export class SessionController {
       }
     }
   }
-  /** Tóm tắt từng lô tuần tự, chạy song song với OCR và dịch trên mọi nhà cung cấp. */
+  /** Khi bật, tóm tắt đủ lô song song với dịch cho mọi provider; mỗi lần chỉ chạy một request. */
   private async summarize(): Promise<void> {
+    if (
+      !this.state.settings.summaryEnabled ||
+      !hasProviderAccess(this.state.settings, this.state.hasApiKey)
+    )
+      return;
     const session = this.state.session;
     const rows = session
       ? this.db.translatedAfter(session.id, session.summarizedThrough, SUMMARY_INTERVAL)

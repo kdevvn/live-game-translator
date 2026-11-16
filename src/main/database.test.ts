@@ -4,10 +4,148 @@ import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../shared/defaults';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { settingsSchema } from '../shared/types';
+import { settingsSchema, profileSchema } from '../shared/types';
 import Database from 'better-sqlite3';
 
 describe('Lưu dữ liệu và migration', () => {
+  it('hồ sơ cũ mặc định tên đầu dòng và mỗi game lưu kiểu tên độc lập', () => {
+    const legacy = { ...DEFAULT_PROFILE };
+    Reflect.deleteProperty(legacy, 'speakerDisplay');
+    expect(profileSchema.parse(legacy).speakerDisplay).toBe('inline');
+    expect(profileSchema.safeParse({ ...legacy, speakerDisplay: 'invalid' }).success).toBe(false);
+    const db = openDatabase(':memory:');
+    try {
+      db.saveProfile({ ...DEFAULT_PROFILE, id: 'first', speakerDisplay: 'separateLine' });
+      db.saveProfile({ ...DEFAULT_PROFILE, id: 'second' });
+      db.saveProfile({ ...DEFAULT_PROFILE, id: 'third', speakerDisplay: 'none' });
+      expect(db.profiles().find((p) => p.id === 'first')?.speakerDisplay).toBe('separateLine');
+      expect(db.profiles().find((p) => p.id === 'second')?.speakerDisplay).toBe('inline');
+      expect(db.profiles().find((p) => p.id === 'third')?.speakerDisplay).toBe('none');
+    } finally {
+      db.close();
+    }
+  });
+  it('migration v3 xóa thuật ngữ và đề xuất cũ, giữ dữ liệu còn lại và chỉ chạy một lần', () => {
+    const folder = mkdtempSync(join(tmpdir(), 'remove-glossary-'));
+    const file = join(folder, 'data.sqlite');
+    let db = openDatabase(file);
+    try {
+      db.saveProfile({
+        ...DEFAULT_PROFILE,
+        id: 'game',
+        name: 'Game',
+        instructions: 'Giữ tên',
+        characters: [{ id: 'a', name: 'Alice', aliases: 'Ally' }],
+      });
+      const session = db.createSession('game');
+      db.saveDialogue({
+        id: 'd',
+        sessionId: session.id,
+        sequence: 1,
+        text: 'Hello.',
+        translation: 'Chào.',
+        speaker: 'Alice',
+        listener: 'unknown',
+        status: 'translated',
+        createdAt: 0,
+        ocrMs: 0,
+        apiMs: 0,
+      });
+      db.saveSettings({ ...DEFAULT_SETTINGS, locale: 'en' });
+      db.close();
+      const legacy = new Database(file);
+      try {
+        legacy.pragma('user_version = 2');
+        legacy
+          .prepare(
+            "UPDATE profiles SET value=json_set(value, '$.glossary', json(?)) WHERE id='game'",
+          )
+          .run(JSON.stringify([{ source: 'Gate', target: 'Cổng' }]));
+        for (const field of ['glossary', 'relationships'])
+          legacy.prepare('INSERT INTO profile_proposals VALUES (?,?,?)').run(
+            field,
+            'game',
+            JSON.stringify({
+              id: field,
+              profileId: 'game',
+              field,
+              key: '',
+              before: '[]',
+              after: '[]',
+              evidence: 'Cũ',
+              status: 'pending',
+            }),
+          );
+        legacy.prepare('INSERT INTO translation_cache VALUES (?,?,?)').run('old-cache', '{}', 0);
+      } finally {
+        legacy.close();
+      }
+      db = openDatabase(file);
+      expect(db.profiles()[0]).not.toHaveProperty('glossary');
+      expect(db.profiles()[0]).toMatchObject({
+        name: 'Game',
+        instructions: 'Giữ tên',
+        revision: 1,
+        characters: [{ name: 'Alice', aliases: 'Ally' }],
+      });
+      expect(db.profileProposals().map((row) => row.field)).toEqual(['relationships']);
+      expect(db.dialogues(session.id)).toHaveLength(1);
+      expect(db.settings().locale).toBe('en');
+      db.migrate();
+      expect(db.profiles()[0].revision).toBe(1);
+      const raw = new Database(file, { readonly: true });
+      try {
+        expect(raw.pragma('user_version', { simple: true })).toBe(3);
+        expect(
+          raw
+            .prepare("SELECT json_type(value,'$.glossary') AS field FROM profiles WHERE id='game'")
+            .get(),
+        ).toEqual({ field: null });
+        expect(
+          raw.prepare("SELECT id FROM profile_proposals WHERE id='glossary'").get(),
+        ).toBeUndefined();
+        expect(raw.prepare('SELECT count(*) AS count FROM translation_cache').get()).toEqual({
+          count: 0,
+        });
+      } finally {
+        raw.close();
+      }
+    } finally {
+      db.close();
+      rmSync(folder, { recursive: true, force: true });
+    }
+  });
+  it.each(['onnx', 'unsupported'])('từ chối provider không còn hỗ trợ: %s', (provider) => {
+    const db = openDatabase(':memory:');
+    try {
+      const preferences = JSON.stringify({
+        ...DEFAULT_SETTINGS,
+        provider,
+      });
+      db.writeValue('preferences', preferences);
+      expect(() => db.settings()).toThrow();
+      expect(settingsSchema.safeParse({ ...DEFAULT_SETTINGS, provider }).success).toBe(false);
+      expect(db.readValue('preferences')).toBe(preferences);
+    } finally {
+      db.close();
+    }
+  });
+  it('settings cũ mặc định tắt tóm tắt, lưu được bật/tắt và từ chối giá trị sai kiểu', () => {
+    const db = openDatabase(':memory:');
+    try {
+      db.writeValue('preferences', JSON.stringify({ model: 'old' }));
+      expect(db.settings().summaryEnabled).toBe(false);
+      for (const summaryEnabled of [true, false]) {
+        db.saveSettings({ ...db.settings(), summaryEnabled });
+        expect(db.settings().summaryEnabled).toBe(summaryEnabled);
+      }
+      expect(
+        settingsSchema.safeParse({ ...DEFAULT_SETTINGS, summaryEnabled: 'true' }).success,
+      ).toBe(false);
+    } finally {
+      db.close();
+    }
+  });
   it('lưu người chưa xác định dưới dạng null trong SQLite', () => {
     const folder = mkdtempSync(join(tmpdir(), 'dialogue-null-'));
     const file = join(folder, 'data.sqlite');
@@ -55,7 +193,6 @@ describe('Lưu dữ liệu và migration', () => {
         instructions: 'Giữ tên',
         characters: [{ id: 'c', name: 'Sai', aliases: '' }],
         relationships: [{ speaker: 'Sai', listener: 'Khác', self: 'ta', address: 'ngươi' }],
-        glossary: [{ source: 'Gate', target: 'Sai' }],
       });
       const original = db.profiles().find((p) => p.id === 'game')!;
       const session = db.createSession('game');
@@ -75,8 +212,7 @@ describe('Lưu dữ liệu và migration', () => {
         });
       db.applyProfileEnrichment('game', original.revision, {
         characters: [],
-        relationships: [],
-        glossary: [{ source: 'Gate', target: 'Khác' }],
+        relationships: [{ speaker: 'Sai', listener: 'Khác', self: 'tôi', address: 'bạn' }],
         evidence: 'test',
       });
       expect(db.profileProposals('game')).toHaveLength(1);
@@ -88,7 +224,6 @@ describe('Lưu dữ liệu và migration', () => {
         instructions: 'Giữ tên',
         characters: [],
         relationships: [],
-        glossary: [],
         revision: original.revision + 1,
       });
       expect(db.profileProposals('game')).toHaveLength(0);
@@ -108,16 +243,12 @@ describe('Lưu dữ liệu và migration', () => {
         overlayFullscreen: false,
         overlayFullscreenFontSize: 28,
       });
-      db.saveSettings({
-        ...db.settings(),
-        overlayFullscreen: true,
-        overlayFullscreenFontSize: 100,
-      });
+      db.saveSettings({ ...db.settings(), overlayFullscreen: true, overlayFullscreenFontSize: 48 });
       expect(db.settings()).toMatchObject({
         overlayFullscreen: true,
-        overlayFullscreenFontSize: 100,
+        overlayFullscreenFontSize: 48,
       });
-      for (const overlayFullscreenFontSize of [15, 101, 1.5, NaN])
+      for (const overlayFullscreenFontSize of [15, 65, 1.5, NaN])
         expect(
           settingsSchema.safeParse({ ...DEFAULT_SETTINGS, overlayFullscreenFontSize }).success,
         ).toBe(false);
@@ -209,7 +340,13 @@ describe('Lưu dữ liệu và migration', () => {
     db.saveProfile(DEFAULT_PROFILE);
     const session = db.createSession('general');
     db.saveProfile({ ...DEFAULT_PROFILE, instructions: 'Giữ tên nhân vật' });
-    db.saveSettings({ ...DEFAULT_SETTINGS, theme: 'dark', locale: 'en', duplicateThreshold: 95 });
+    db.saveSettings({
+      ...DEFAULT_SETTINGS,
+      theme: 'dark',
+      locale: 'en',
+      duplicateThreshold: 95,
+      summaryEnabled: true,
+    });
     db.saveDialogue({
       id: 'usage-test',
       sessionId: session.id,
@@ -234,6 +371,7 @@ describe('Lưu dữ liệu và migration', () => {
       expect(reopened.settings().theme).toBe('dark');
       expect(reopened.settings().locale).toBe('en');
       expect(reopened.settings().duplicateThreshold).toBe(95);
+      expect(reopened.settings().summaryEnabled).toBe(true);
       expect(reopened.dialogues(session.id)[0].costUsd).toBe(0.00001234);
       expect(reopened.dialogues(session.id)[0].modelId).toBe('vendor/actual-model:free');
       expect(reopened.dialogues(session.id)[0].usage).toEqual({

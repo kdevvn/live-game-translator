@@ -341,7 +341,7 @@ describe('Luồng model local', () => {
     expect(
       (await api.translate('local', [], new AbortController().signal, progress)).translation,
     ).toBe('Chào.');
-    expect(progress).toHaveBeenCalledWith('Chào.');
+    expect(progress).toHaveBeenCalledWith('Chào.', '');
     expect(transport.mock.calls[0][0]).toBe('http://192.168.1.10:1234/v1/chat/completions');
     expect(transport.mock.calls[0][1]?.headers).toMatchObject({
       Authorization: 'Bearer local-token',
@@ -396,7 +396,6 @@ describe('Tác vụ và timeout local', () => {
             ? JSON.stringify({
                 characters: [],
                 relationships: [],
-                glossary: [],
                 evidence: 'Không có dữ kiện.',
               })
             : 'Tóm tắt.';
@@ -435,7 +434,6 @@ describe('Tác vụ và timeout local', () => {
         ? JSON.stringify({
             characters: [],
             relationships: [],
-            glossary: [],
             evidence: 'Không có dữ kiện.',
           })
         : 'Tóm tắt.';

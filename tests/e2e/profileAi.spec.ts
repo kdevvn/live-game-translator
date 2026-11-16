@@ -55,7 +55,6 @@ test('model nền và lọc dữ kiện hồ sơ khi chưa đủ hội thoại q
                     relationships: [
                       { speaker: 'Father', listener: 'Son', self: 'cha', address: 'con' },
                     ],
-                    glossary: [{ source: 'Northern Gate', target: 'Cổng Bắc' }],
                     evidence: 'Kiến thức nền về tên nhân vật, không tiết lộ tình tiết.',
                   }),
                 },
@@ -99,12 +98,12 @@ test('model nền và lọc dữ kiện hồ sơ khi chưa đủ hội thoại q
       })
       .toBe(25000);
     const original = {
+      speakerDisplay: 'inline' as const,
       id: 'game',
       name: 'The Northern Gate',
       instructions: 'Giữ tên riêng',
       characters: [],
       relationships: [],
-      glossary: [{ source: 'Northern Gate', target: 'Cổng cũ' }],
       revision: 0,
       aiEnabled: true,
     };
@@ -136,10 +135,7 @@ test('model nền và lọc dữ kiện hồ sơ khi chưa đủ hội thoại q
     );
     await expect(page.locator('.profile-proposal')).toHaveCount(0);
     const snapshot = await page.evaluate(() => window.app.snapshot());
-    expect(
-      snapshot.ok &&
-        snapshot.value.profiles.find((profile) => profile.id === 'game')?.glossary[0].target,
-    ).toBe('Cổng cũ');
+    expect(JSON.stringify(snapshot)).not.toContain('"glossary"');
     expect(
       snapshot.ok && snapshot.value.profiles.find((profile) => profile.id === 'game')?.characters,
     ).toEqual([]);

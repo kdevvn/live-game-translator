@@ -105,6 +105,7 @@ Khi dựng scaffold, tạo script tương ứng: `lint`, `format:check`, `typech
 ## 6. React và giao tiếp tiến trình
 
 - Dùng function component, hook theo đúng Rules of Hooks; render không gây side effect.
+- Checkbox dùng `src/renderer/components/Checkbox.tsx`, truyền `label`/`hint` đã dịch, `checked` và `onChange(checked)`. Component sở hữu input, nhãn, trợ giúp và kiểu daisyUI thống nhất; không viết checkbox riêng trong feature hoặc bọc Checkbox trong Field. Các thuộc tính native như `disabled`, `required`, `name`, `id` và mô tả truy cập được truyền trực tiếp khi cần.
 - Dùng state cục bộ trước; Context chỉ cho dữ liệu dùng chung như theme/locale và snapshot phiên khi cần. Không thêm global store trước khi có vấn đề cụ thể.
 - Trạng thái phiên có một nguồn sự thật tại main. Renderer gửi intent và nhận snapshot/event, không tự duy trì bản sao trạng thái nghiệp vụ độc lập.
 - Effect đăng ký listener phải cleanup; start/stop lặp lại không tạo nhiều stream, worker hoặc subscription.

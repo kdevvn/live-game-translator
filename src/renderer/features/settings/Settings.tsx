@@ -6,10 +6,12 @@ import { settingsSchema } from '../../../shared/types';
 import type { AppSettings, ModelOption, SessionSnapshot } from '../../../shared/types';
 import {
   DEFAULT_SETTINGS,
+  SUMMARY_INTERVAL,
   PROFILE_INPUT_TOKEN_LIMIT_MIN,
   PROFILE_INPUT_TOKEN_LIMIT_MAX,
 } from '../../../shared/defaults';
 import { Field } from '../../components/Field';
+import { Checkbox } from '../../components/Checkbox';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { useAction } from '../../components/useAction';
 import { ModelSelect } from './ModelSelect';
@@ -260,6 +262,12 @@ export function Settings({ snapshot }: { snapshot: SessionSnapshot }) {
                 }}
               />
             </Field>
+            <Checkbox
+              label={t('settings.summaryEnabled')}
+              hint={t('settings.summaryEnabledHint', { count: SUMMARY_INTERVAL })}
+              checked={value.summaryEnabled}
+              onChange={(checked) => setValue({ ...value, summaryEnabled: checked })}
+            />
             {backgroundFields.map((field, index) => (
               <Field
                 key={field}
@@ -393,6 +401,86 @@ export function Settings({ snapshot }: { snapshot: SessionSnapshot }) {
                 required
                 value={value.pauseShortcut}
                 onChange={(e) => setValue({ ...value, pauseShortcut: e.target.value })}
+              />
+            </Field>
+          </div>
+        </section>
+        <section className="settings-section settings-overlay">
+          <div>
+            <h2>{t('settings.overlay')}</h2>
+            <div
+              className="subtitle-preview"
+              style={{
+                fontSize: value.overlayFullscreen
+                  ? value.overlayFullscreenFontSize
+                  : value.overlayFontSize,
+                backgroundColor: `color-mix(in srgb, var(--subtitle-bg) ${value.overlayOpacity * 100}%, var(--ground))`,
+              }}
+            >
+              {t('settings.preview')}
+            </div>
+          </div>
+          <div className="settings-fields">
+            <Checkbox
+              label={t('settings.overlayFullscreen')}
+              checked={value.overlayFullscreen}
+              onChange={(checked) => setValue({ ...value, overlayFullscreen: checked })}
+            />
+            <Field label={t('settings.fullscreenFontSize')}>
+              <input
+                type="number"
+                required
+                min={16}
+                max={64}
+                step={1}
+                value={value.overlayFullscreenFontSize}
+                onChange={(e) =>
+                  setValue({
+                    ...value,
+                    overlayFullscreenFontSize: e.target.value === '' ? NaN : Number(e.target.value),
+                  })
+                }
+              />
+            </Field>
+            <Field label={t('settings.fontSize')}>
+              <input
+                type="number"
+                min={16}
+                max={64}
+                value={value.overlayFontSize}
+                onChange={(e) =>
+                  setValue({
+                    ...value,
+                    overlayFontSize: e.target.value === '' ? NaN : Number(e.target.value),
+                  })
+                }
+              />
+            </Field>
+            <Field label={t('settings.overlayDuration')} hint={t('settings.overlayDurationHint')}>
+              <input
+                type="number"
+                required
+                min={1}
+                max={60}
+                step={1}
+                value={value.overlayDurationSeconds}
+                onChange={(e) =>
+                  setValue({
+                    ...value,
+                    overlayDurationSeconds: e.target.value === '' ? NaN : Number(e.target.value),
+                  })
+                }
+              />
+            </Field>
+            <Field label={`${t('settings.opacity')} (${Math.round(value.overlayOpacity * 100)}%)`}>
+              <input
+                type="range"
+                min={40}
+                max={100}
+                value={value.overlayOpacity * 100}
+                onChange={(e) =>
+                  setValue({ ...value, overlayOpacity: Number(e.target.value) / 100 })
+                }
               />
             </Field>
           </div>

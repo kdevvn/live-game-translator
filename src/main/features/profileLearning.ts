@@ -18,7 +18,6 @@ function names(character: { name: string; aliases: string }): string[] {
 }
 /** Lọc dữ kiện AI theo các câu gốc đã dịch, không thay dữ liệu người dùng đã lưu. */
 export function filterProfileEvidence(
-  profile: GameProfile,
   facts: ProfileEnrichment,
   dialogues: string[],
 ): ProfileEnrichment {
@@ -38,9 +37,8 @@ export function filterProfileEvidence(
         return true;
     return false;
   }
-  const characterNames = new Set([...profile.characters, ...facts.characters].flatMap(names));
   return {
-    ...facts,
+    evidence: facts.evidence,
     characters: facts.characters
       .filter((character) => supported(names(character)))
       .map((character) => ({
@@ -58,12 +56,6 @@ export function filterProfileEvidence(
         address: row.address.split(ADDRESS_SEPARATOR)[0].trim(),
       }))
       .filter((row) => row.self && row.address),
-    glossary: facts.glossary.filter(
-      (row) =>
-        !characterNames.has(normalized(row.source)) &&
-        !characterNames.has(normalized(row.target)) &&
-        supported([row.source]),
-    ),
   };
 }
 /** Khóa nghiệp vụ ổn định cho từng mục của hồ sơ. */
@@ -73,12 +65,10 @@ function itemKey(field: ProfileProposal['field'], item: unknown): string {
     const row = profileSchema.shape.relationships.element.parse(item);
     return JSON.stringify([normalized(row.speaker), normalized(row.listener)]);
   }
-  if (field === 'glossary')
-    return normalized(profileSchema.shape.glossary.element.parse(item).source);
   return '';
 }
 
-/** Ghép nhân vật/quan hệ/thuật ngữ; luôn giữ nguyên quy tắc dịch ưu tiên do người dùng sở hữu. */
+/** Ghép nhân vật và quan hệ; luôn giữ nguyên quy tắc dịch ưu tiên do người dùng sở hữu. */
 export function mergeProfile(
   profile: GameProfile,
   facts: ProfileEnrichment,
@@ -165,12 +155,6 @@ export function mergeProfile(
       normalized(old.address) !== normalized(incoming.address)
     )
       propose('relationships', itemKey('relationships', old), old, incoming);
-  }
-  for (const row of facts.glossary) {
-    const key = normalized(row.source);
-    const old = result.glossary.find((item) => normalized(item.source) === key);
-    if (!old) result.glossary.push(row);
-    else if (normalized(old.target) !== normalized(row.target)) propose('glossary', key, old, row);
   }
   return { profile: profileSchema.parse(result), proposals };
 }

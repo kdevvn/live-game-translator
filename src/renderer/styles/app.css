@@ -69,7 +69,7 @@ button.text-button {
   background: transparent;
   padding-inline: 4px;
 }
-input,
+input:not([type='checkbox']),
 select,
 textarea {
   min-width: 0;
@@ -84,25 +84,21 @@ select {
   appearance: none;
   padding-right: 28px;
 }
-.field:has(> select) {
-  position: relative;
+.field > select {
+  grid-area: 2 / 1;
 }
 .field:has(> select)::after {
   content: '';
-  position: absolute;
-  right: 12px;
-  bottom: 14px;
+  grid-area: 2 / 1;
+  align-self: center;
+  justify-self: end;
+  margin-right: 12px;
   width: 6px;
   height: 6px;
   border-right: 1px solid var(--muted);
   border-bottom: 1px solid var(--muted);
   transform: rotate(45deg);
   pointer-events: none;
-}
-input[type='checkbox'] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--primary);
 }
 input[type='range'] {
   padding-inline: 0;
@@ -350,6 +346,22 @@ nav button.active svg {
 .field > label {
   font-weight: 500;
 }
+.checkbox-field > .check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  min-height: 40px;
+  font-size: inherit;
+  cursor: pointer;
+}
+.checkbox-field > .check-row:has(> input:disabled) {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.checkbox-field .checkbox {
+  flex-shrink: 0;
+}
 .field small {
   font-size: 13px;
   line-height: 1.6;
@@ -434,28 +446,6 @@ nav button.active svg {
   line-height: 1.65;
   overflow-wrap: anywhere;
   margin-bottom: 12px;
-}
-.glossary-inspector {
-  border-top: 1px solid var(--rule);
-  padding-top: 14px;
-}
-.glossary-inspector dl {
-  margin: 0;
-}
-.glossary-inspector dl > div {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 7px 0;
-  border-top: 1px solid var(--rule);
-}
-.glossary-inspector dt,
-.glossary-inspector dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-.glossary-inspector dt {
-  color: var(--muted);
 }
 .profile-facts h3 {
   margin-bottom: 6px;
@@ -552,13 +542,6 @@ summary {
   color: var(--muted);
   font-size: 12px;
 }
-.check-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 12px 0 16px;
-  font-size: 12px;
-}
 .context-note {
   border-top: 1px solid var(--panel-border);
   padding-top: 14px;
@@ -628,7 +611,7 @@ summary {
 }
 .settings-section {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   gap: var(--gap);
   padding: 16px 0;
   border-top: 1px solid var(--panel-border);
@@ -845,6 +828,14 @@ body.overlay-body {
 }
 .overlay-caption.editing {
   -webkit-app-region: drag;
+}
+.subtitle-speaker {
+  color: var(--muted);
+  white-space: nowrap;
+  margin-inline-end: 0.2em;
+}
+.overlay-caption .subtitle-speaker {
+  color: var(--subtitle-speaker);
 }
 .overlay-controls {
   display: flex;
@@ -1347,7 +1338,7 @@ nav button.active {
 }
 .recognition-panel > .inspector-section,
 .recognition-panel > .context-note,
-.recognition-panel > .check-row {
+.recognition-panel > .checkbox-field {
   margin: 0;
 }
 .recognition-panel > .inspector-section:nth-child(2),
@@ -1361,7 +1352,6 @@ nav button.active {
   margin: 0;
 }
 .recognition-panel > .context-note,
-.recognition-panel > .glossary-inspector,
 .recognition-panel > .profile-facts {
   border-top: 1px solid var(--rule);
   padding-top: 16px;
@@ -1482,7 +1472,8 @@ nav button.active {
   min-height: 40px;
 }
 #settings-form .settings-key,
-#settings-form .settings-model-actions {
+#settings-form .settings-model-actions,
+#settings-form .settings-overlay .checkbox-field {
   grid-column: 1 / -1;
 }
 .settings-key {
@@ -1507,6 +1498,10 @@ nav button.active {
   min-width: 40px;
   height: 40px;
 }
+.settings-overlay .subtitle-preview {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
 @media (max-width: 700px) {
   #settings-form > .settings-section {
     padding: 16px;
@@ -1523,108 +1518,4 @@ nav button.active {
   .loading.loading-spinner {
     animation: none;
   }
-}
-
-/* Xem trước phụ đề chiếm một hàng riêng; tùy chỉnh bên dưới co về một cột ở cửa sổ hẹp. */
-.overlay-settings {
-  min-width: 0;
-  padding: 20px;
-  background: var(--surface);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--radius);
-}
-.overlay-settings > .section-heading {
-  align-items: start;
-  gap: 16px;
-}
-.overlay-settings .section-heading p {
-  margin: 6px 0 0;
-}
-.overlay-settings-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 24px;
-}
-.overlay-settings-preview {
-  min-width: 0;
-}
-.overlay-settings-preview > p:first-child {
-  margin-top: 0;
-}
-.overlay-settings .subtitle-preview {
-  margin-block: 8px 12px;
-  overflow-wrap: anywhere;
-}
-.overlay-settings-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px 24px;
-  align-content: start;
-}
-.overlay-settings-fields > .check-row {
-  grid-column: 1 / -1;
-  margin: 0;
-  min-height: 40px;
-}
-.overlay-settings-fields > .field {
-  align-content: start;
-  min-width: 0;
-  margin: 0;
-}
-.overlay-settings .field > input:not([type='range']) {
-  width: 100%;
-}
-@media (max-width: 640px) {
-  .overlay-settings {
-    padding: 16px;
-  }
-  .overlay-settings > .section-heading {
-    flex-direction: column;
-  }
-  .overlay-settings-fields {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-/* CSS ô nhập chung không được làm mất dấu tích hoặc tăng độ dày thanh kéo DaisyUI. */
-.overlay-settings input.checkbox {
-  width: 18px;
-  height: 18px;
-  padding: 3px;
-  border-radius: var(--control-radius);
-  box-shadow: none;
-}
-.overlay-settings input.checkbox:checked {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--on-primary);
-}
-.overlay-settings input.range {
-  --range-thumb-size: 18px;
-  --range-bg: var(--control);
-  --range-thumb: var(--surface);
-  --range-progress: var(--primary);
-  --range-fill: 0;
-  width: 100%;
-  height: 32px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--primary);
-}
-.overlay-settings input.range::-webkit-slider-runnable-track {
-  height: 6px;
-}
-.overlay-settings input.range::-moz-range-track {
-  height: 6px;
-}
-.overlay-settings input.range::-webkit-slider-thumb {
-  border-width: 2px;
-  border-radius: 50%;
-  box-shadow: none;
-}
-.overlay-settings input.range::-moz-range-thumb {
-  border-width: 2px;
-  border-radius: 50%;
-  box-shadow: none;
 }

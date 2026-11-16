@@ -1,9 +1,5 @@
 import { z } from 'zod';
-import {
-  OVERLAY_FONT_SIZE_MAX,
-  PROFILE_INPUT_TOKEN_LIMIT_MIN,
-  PROFILE_INPUT_TOKEN_LIMIT_MAX,
-} from './defaults';
+import { PROFILE_INPUT_TOKEN_LIMIT_MIN, PROFILE_INPUT_TOKEN_LIMIT_MAX } from './defaults';
 
 /** Vùng chữ tương đối so với kích thước nội dung video, trong khoảng 0-1. */
 export const regionSchema = z
@@ -55,6 +51,8 @@ export const settingsSchema = z.object({
   locale: z.enum(['vi', 'en']),
   model: z.string().max(200),
   summaryModel: z.string().max(200),
+  /** Bật tạo và sử dụng tóm tắt hội thoại; tắt vẫn giữ dữ liệu đã lưu. */
+  summaryEnabled: z.boolean(),
   profileModel: z.string().max(200),
   /** Số câu dịch thành công mỗi lô học hồ sơ. */
   profileLearningInterval: z.number().int().min(1).max(200),
@@ -69,10 +67,10 @@ export const settingsSchema = z.object({
   duplicateThreshold: z.number().int().min(0).max(100),
   translateShortcut: z.string().min(1).max(100),
   pauseShortcut: z.string().min(1).max(100),
-  overlayFontSize: z.number().int().min(16).max(OVERLAY_FONT_SIZE_MAX),
+  overlayFontSize: z.number().int().min(16).max(64),
   /** Chế độ phủ màn hình và cỡ chữ độc lập của chế độ này. */
   overlayFullscreen: z.boolean(),
-  overlayFullscreenFontSize: z.number().int().min(16).max(OVERLAY_FONT_SIZE_MAX),
+  overlayFullscreenFontSize: z.number().int().min(16).max(64),
   overlayOpacity: z.number().min(0.4).max(1),
   /** Thời gian hiện sau lần cập nhật caption cuối, tính bằng giây. */
   overlayDurationSeconds: z.number().int().min(1).max(60),
@@ -97,11 +95,10 @@ export const profileSchema = z.object({
   id: z.string().min(1).max(100),
   name: z.string().min(1).max(100),
   instructions: z.string().max(4000),
+  /** Bố cục nhãn người nói trong phụ đề; hồ sơ cũ mặc định tên đầu dòng. */
+  speakerDisplay: z.enum(['inline', 'separateLine', 'none']).default('inline'),
   characters: z.array(characterSchema).max(100),
   relationships: z.array(relationshipSchema).max(200),
-  glossary: z
-    .array(z.object({ source: z.string().min(1).max(200), target: z.string().min(1).max(200) }))
-    .max(300),
   revision: z.number().int().nonnegative(),
   /** Thiếu ở dữ liệu cũ: main mặc định bật, trừ hồ sơ Chung. */
   aiEnabled: z.boolean().optional(),
@@ -109,18 +106,16 @@ export const profileSchema = z.object({
 export type GameProfile = z.infer<typeof profileSchema>;
 
 /** Dữ kiện AI đề nghị; quy tắc dịch ưu tiên chỉ do người dùng nhập, không thuộc output AI. */
-export const profileEnrichmentSchema = profileSchema
-  .pick({ relationships: true, glossary: true })
-  .extend({
-    characters: z.array(characterSchema.omit({ id: true })).max(100),
-    evidence: z.string().min(1).max(2000),
-  });
+export const profileEnrichmentSchema = profileSchema.pick({ relationships: true }).extend({
+  characters: z.array(characterSchema.omit({ id: true })).max(100),
+  evidence: z.string().min(1).max(2000),
+});
 export type ProfileEnrichment = z.infer<typeof profileEnrichmentSchema>;
 /** Đề xuất lưu bền vững; instructions chỉ để đọc dữ liệu cũ, main không phát hoặc chấp nhận mục này. */
 export const profileProposalSchema = z.object({
   id: z.string(),
   profileId: z.string(),
-  field: z.enum(['instructions', 'characters', 'relationships', 'glossary']),
+  field: z.enum(['instructions', 'characters', 'relationships']),
   key: z.string(),
   before: z.string(),
   after: z.string(),
@@ -135,10 +130,10 @@ export interface ProfileTask {
   error: AppError | null;
 }
 
-/** Bản dịch có cấu trúc đã được xác thực trước khi đưa lên overlay. */
+/** Bản dịch có cấu trúc; speaker đứng trước translation để provider phát tên sớm khi streaming. */
 export const translationSchema = z.object({
-  translation: z.string().min(1).max(12000),
   speaker: z.string().max(100),
+  translation: z.string().min(1).max(12000),
   listener: z.string().max(100),
 });
 /** ID model do metadata API xác nhận, không dùng tên router cấu hình làm bằng chứng. */

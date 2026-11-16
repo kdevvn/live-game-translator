@@ -1,9 +1,4 @@
 {
-  "field": {
-    "range": "Range: {{min}}–{{max}}.",
-    "minimum": "Minimum: {{min}}.",
-    "maximum": "Maximum: {{max}}."
-  },
   "app": {
     "name": "Live Game Translator",
     "subtitle": "Stay with the story",
@@ -33,7 +28,6 @@
     "subtitle": "Current subtitle",
     "subtitleEmpty": "Subtitles appear when a new line arrives.",
     "manage": "Manage",
-    "glossaryEmpty": "No glossary terms in this profile yet.",
     "charactersEmpty": "No characters remembered yet."
   },
   "commands": {
@@ -112,9 +106,6 @@
     "overlay": "Adjust subtitle overlay",
     "overlayDone": "Lock subtitle position",
     "closeFullscreenOverlay": "Close fullscreen overlay",
-    "overlaySettingsHint": "Adjust subtitle appearance right where you translate.",
-    "overlayPreview": "Appearance preview",
-    "overlayFullscreenHint": "Subtitles cover the full screen. Turn this off to move the floating subtitle window.",
     "overlayHint": "Drag to move. Lock again to click through the subtitles.",
     "profile": "Game profile",
     "newSession": "New session",
@@ -122,6 +113,7 @@
     "selectSession": "Choose a session to resume",
     "summary": "Remembered context",
     "summaryEmpty": "A summary is created after enough dialogue.",
+    "summaryDisabled": "Dialogue summaries are off. Enable them in Settings.",
     "needsSetup": "OCR works right away. To translate, select a provider and model in Settings; OpenRouter requires an API key.",
     "count": "{{count}} dialogue entries",
     "selectProfile": "Select or create a profile"
@@ -141,14 +133,11 @@
     "self": "Self pronoun",
     "address": "Address listener as",
     "direction": "Each row is one direction. Add a separate rule for the reverse direction.",
-    "glossary": "Glossary",
-    "original": "Original term",
-    "translated": "Approved translation",
-    "empty": "No entries yet. Add characters or terms as you encounter them.",
+    "empty": "No entries yet. Add characters as you encounter them.",
     "defaultName": "General",
     "savedHint": "Saving rules for the active profile pauses the session to prevent outdated context.",
     "clearProfile": "Clear profile data",
-    "confirmClear": "Clear characters, forms of address, terms, and AI suggestions for “{{name}}”? The name, priority translation rules, and dialogue history will be kept. AI will learn from new dialogue only; the active session will pause.",
+    "confirmClear": "Clear characters, forms of address and AI suggestions for “{{name}}”? The name, priority translation rules, and dialogue history will be kept. AI will learn from new dialogue only; the active session will pause.",
     "aiTitle": "AI profile updates",
     "aiEnabled": "Automatically enrich this profile with AI",
     "aiToggleHint": "Applies after saving. AI fills missing information; changes to existing values require your approval.",
@@ -169,7 +158,24 @@
     "accept": "Accept",
     "reject": "Dismiss suggestion",
     "changedElsewhere": "This profile has been updated. Your draft is preserved; reload to see the latest data before saving.",
-    "reload": "Reload profile"
+    "reload": "Reload profile",
+    "speakerDisplay": "Speaker name layout",
+    "speakerMode": {
+      "inline": "At line start (default)",
+      "separateLine": "Separate line",
+      "none": "No name"
+    },
+    "speakerHint": {
+      "inline": "The name appears before the dialogue on the same line. Dialogue can span multiple lines.",
+      "separateLine": "The name appears on its own line above the dialogue. The following lines are dialogue.",
+      "none": "All text is dialogue. AI uses the profile and conversation to identify the speaker, or leaves it unknown when unclear."
+    },
+    "speakerExampleLabel": "Example in-game subtitle",
+    "speakerExample": {
+      "inline": "Dutch They may be okay,\nwe don't know.",
+      "separateLine": "Dutch\nThey may be okay,\nwe don't know.",
+      "none": "They may be okay,\nwe don't know."
+    }
   },
   "settings": {
     "title": "Settings",
@@ -212,6 +218,8 @@
     "preview": "Ta sẽ không bỏ con lại phía sau.",
     "saveHint": "Settings save automatically. Changing provider, address, translation model, or key/token pauses the session; changing background models does not.",
     "summaryModel": "Summary model",
+    "summaryEnabled": "Use dialogue summaries",
+    "summaryEnabledHint": "Off by default. When enabled, summarize every {{count}} successfully translated lines and use the summary as context. When disabled, keep saved summaries without sending them to the model.",
     "profileModel": "Game profile model",
     "useTranslationModel": "Use translation model",
     "effectiveModel": "Effective model: {{model}}",

@@ -24,6 +24,35 @@ afterEach(() => {
 });
 
 describe('PaddleOCR cục bộ', () => {
+  it('giữ dòng tên riêng và ghép các khối chữ cùng hàng theo trái sang phải', () => {
+    const name = line('Dutch', 0);
+    const start = line('They may be okay,', 30);
+    const end = line("we don't know.", 60);
+    const inlineName = {
+      ...line('Dutch', 31),
+      poly: [
+        [0, 31],
+        [70, 31],
+        [70, 51],
+        [0, 51],
+      ],
+    };
+    const inlineSpeech = {
+      ...start,
+      poly: [
+        [90, 30],
+        [300, 30],
+        [300, 50],
+        [90, 50],
+      ],
+    };
+    expect(readableText(readOcrLines([end, start, name]))).toBe(
+      "Dutch\nThey may be okay,\nwe don't know.",
+    );
+    expect(readableText(readOcrLines([inlineSpeech, inlineName, end]))).toBe(
+      "Dutch They may be okay,\nwe don't know.",
+    );
+  });
   it('giữ cả hai người nói theo thứ tự dòng và dấu câu từ engine', () => {
     const result = readOcrLines([
       line('Angrboda: Look, this is the only way things turn out.', 80),
@@ -31,7 +60,7 @@ describe('PaddleOCR cục bộ', () => {
       line('nhiễu nền', 100, 0.3),
     ]);
     expect(readableText(result)).toBe(
-      "Atreus: There's just no way... Angrboda: Look, this is the only way things turn out.",
+      "Atreus: There's just no way...\nAngrboda: Look, this is the only way things turn out.",
     );
   });
 

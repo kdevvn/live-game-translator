@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_SETTINGS } from './defaults';
-import { getOverlayText, shouldShowOverlay } from './overlay';
-import { settingsSchema } from './types';
+import { getOverlayText, getOverlaySpeaker, shouldShowOverlay } from './overlay';
 import type { Dialogue } from './types';
 
 describe('Nội dung phụ đề nổi', () => {
@@ -24,6 +23,40 @@ describe('Nội dung phụ đề nổi', () => {
     ocrMs: 0,
     apiMs: 0,
   };
+  it('tên thuộc đúng câu dịch đang hiện, không mang tên cũ sang bản nháp mới', () => {
+    const active = {
+      ...state,
+      hasApiKey: true,
+      settings: { ...DEFAULT_SETTINGS, model: 'test' },
+      overlayText: translated.translation,
+      dialogues: [{ ...translated, speaker: 'Dutch' }],
+    };
+    expect(getOverlaySpeaker(active)).toBe('Dutch');
+    expect(getOverlaySpeaker({ ...active, overlayText: '' })).toBe('');
+    expect(getOverlaySpeaker({ ...active, hasApiKey: false })).toBe('');
+    expect(
+      getOverlaySpeaker({ ...active, dialogues: [{ ...translated, speaker: ' UNKNOWN ' }] }),
+    ).toBe('');
+    expect(
+      getOverlaySpeaker({
+        ...active,
+        overlayText: 'Câu mới',
+        dialogues: [
+          ...active.dialogues,
+          { ...translated, id: 'new', status: 'pending', translation: 'Câu mới' },
+        ],
+      }),
+    ).toBe('');
+    expect(
+      getOverlaySpeaker({
+        ...active,
+        dialogues: [
+          ...active.dialogues,
+          { ...translated, id: 'new', status: 'pending', translation: '' },
+        ],
+      }),
+    ).toBe('Dutch');
+  });
   it('toàn màn hình vẫn hiện khi không có chữ và không chỉnh', () => {
     expect(
       shouldShowOverlay({
@@ -81,13 +114,3 @@ describe('Nội dung phụ đề nổi', () => {
     expect(getOverlayText({ ...state, ocrText: '' })).toBe('');
   });
 });
-
-it.each(['overlayFontSize', 'overlayFullscreenFontSize'] as const)(
-  'cho phép %s đến 100 px và từ chối giá trị vượt giới hạn',
-  (field) => {
-    expect(settingsSchema.shape[field].safeParse(100).success).toBe(true);
-    expect(settingsSchema.shape[field].safeParse(101).success).toBe(false);
-    expect(settingsSchema.shape[field].safeParse(16).success).toBe(true);
-    expect(settingsSchema.shape[field].safeParse(15).success).toBe(false);
-  },
-);

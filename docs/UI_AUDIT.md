@@ -63,18 +63,18 @@ Bản skill đang cài không có mục tên “Pre-Flight Check”. Section 14 
 
 ## Layout-Zone Repetition audit
 
-| Vùng hoặc màn hình | Cấu trúc                                                                     | Kết quả |
-| ------------------ | ---------------------------------------------------------------------------- | ------- |
-| Titlebar           | Một hàng ngang: tên app, nguồn, bảng lệnh, nút Windows native                | Pass    |
-| Sidebar            | Logo, ba đích điều hướng, thông tin phiên, phím tắt ở cuối                   | Pass    |
-| Thanh phiên        | Hồ sơ, phiên mới, chọn phiên cũ trong một hàng control                       | Pass    |
-| Capture workspace  | Chọn nguồn, nút chạy/dừng, canvas preview giữ tỷ lệ, tọa độ mở rộng          | Pass    |
-| Hội thoại          | Danh sách cặp nguồn/bản dịch, metadata và thao tác sửa/thử lại theo dòng     | Pass    |
-| Inspector          | Cột 300 px: OCR, caption, dịch/overlay, tóm tắt, glossary dạng cặp, nhân vật | Pass    |
-| Hồ sơ game         | Document chỉnh sửa với các nhóm nhân vật, quan hệ có hướng và thuật ngữ      | Pass    |
-| Cài đặt            | Cột mô tả cạnh nhóm control, preview phụ đề cạnh thông số đọc                | Pass    |
-| Command palette    | Dialog nổi: ô tìm, danh sách lệnh, trạng thái chọn, gợi ý phím ở chân        | Pass    |
-| Statusbar          | Hàng thấp cố định: OCR cục bộ, model, hướng dịch                             | Pass    |
+| Vùng hoặc màn hình | Cấu trúc                                                                 | Kết quả |
+| ------------------ | ------------------------------------------------------------------------ | ------- |
+| Titlebar           | Một hàng ngang: tên app, nguồn, bảng lệnh, nút Windows native            | Pass    |
+| Sidebar            | Logo, ba đích điều hướng, thông tin phiên, phím tắt ở cuối               | Pass    |
+| Thanh phiên        | Hồ sơ, phiên mới, chọn phiên cũ trong một hàng control                   | Pass    |
+| Capture workspace  | Chọn nguồn, nút chạy/dừng, canvas preview giữ tỷ lệ, tọa độ mở rộng      | Pass    |
+| Hội thoại          | Danh sách cặp nguồn/bản dịch, metadata và thao tác sửa/thử lại theo dòng | Pass    |
+| Inspector          | Cột 300 px: OCR, caption, dịch/overlay, tóm tắt, nhân vật                | Pass    |
+| Hồ sơ game         | Document chỉnh sửa với các nhóm nhân vật và quan hệ có hướng             | Pass    |
+| Cài đặt            | Cột mô tả cạnh nhóm control, preview phụ đề cạnh thông số đọc            | Pass    |
+| Command palette    | Dialog nổi: ô tìm, danh sách lệnh, trạng thái chọn, gợi ý phím ở chân    | Pass    |
+| Statusbar          | Hàng thấp cố định: OCR cục bộ, model, hướng dịch                         | Pass    |
 
 Các nhóm hồ sơ lặp hàng vì chúng là dữ liệu đồng cấp. Không lặp cùng một bố cục card cho mọi vùng. Ở chiều rộng hẹp, sidebar thành hàng điều hướng và inspector xuống sau hội thoại; không tràn ngang. Kích thước tối thiểu Electron hiện tại vẫn là 780 × 600; các ảnh 390 px là kiểm tra độ bền renderer, không phải cam kết ứng dụng mobile.
 
@@ -109,7 +109,7 @@ Các nhóm hồ sơ lặp hàng vì chúng là dữ liệu đồng cấp. Không
 
 Electron trong sandbox công cụ bị Windows chặn đọc runtime. E2E chạy lại ngoài sandbox đã qua, không tắt sandbox bảo mật của Electron. Không gọi OpenRouter trả phí. Build vẫn có cảnh báo externalize `fs/path/crypto` từ OpenCV có sẵn; kiểm tra OCR offline đã qua.
 
-Mẫu visual QA: hồ sơ “Lời tiên tri”, nguồn “Gameplay fixture”, nhân vật Atreus, thuật ngữ Odin, câu gốc/bản dịch đi cùng ảnh fixture `atreus-scene.png`, model `preview/subtitle-model`, OCR 37 ms và API 420 ms. Đây là dữ liệu mẫu chỉ trong script kiểm tra, không phải phép đo hiệu năng hoặc nội dung được chèn vào ứng dụng.
+Mẫu visual QA: hồ sơ “Lời tiên tri”, nguồn “Gameplay fixture”, nhân vật Atreus, câu gốc/bản dịch đi cùng ảnh fixture `atreus-scene.png`, model `preview/subtitle-model`, OCR 37 ms và API 420 ms. Đây là dữ liệu mẫu chỉ trong script kiểm tra, không phải phép đo hiệu năng hoặc nội dung được chèn vào ứng dụng.
 
 Chưa kiểm tra thủ công nhiều màn hình và nhiều mức Windows scaling trong lượt này. E2E đã kiểm tra tỷ lệ nguồn, resize và kích thước preview tại DPI hiện tại; kết quả đó không thay thế ma trận phần cứng.
 

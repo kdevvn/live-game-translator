@@ -4,11 +4,13 @@ import { useTranslation } from 'react-i18next';
 import type { GameProfile, SessionSnapshot } from '../../../shared/types';
 import { DEFAULT_PROFILE } from '../../../shared/defaults';
 import { Field } from '../../components/Field';
+import { Checkbox } from '../../components/Checkbox';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { useAction } from '../../components/useAction';
 import { ProfileAi } from './ProfileAi';
 
 const LAST_PROFILE_KEY = 'lastSelectedProfile';
+const SPEAKER_DISPLAY_MODES = ['inline', 'separateLine', 'none'] as const;
 
 /** Chỉnh hồ sơ như một document, lưu nguyên tử để quan hệ không bị áp dụng nửa chừng. */
 export function Context({ snapshot }: { snapshot: SessionSnapshot }) {
@@ -155,13 +157,38 @@ export function Context({ snapshot }: { snapshot: SessionSnapshot }) {
               onChange={(e) => update({ name: e.target.value })}
             />
           </Field>
-          <Field label={t('context.aiEnabled')} hint={t('context.aiToggleHint')}>
-            <input
-              type="checkbox"
-              checked={profile.aiEnabled ?? profile.id !== 'general'}
-              onChange={(e) => update({ aiEnabled: e.target.checked })}
-            />
-          </Field>
+          <Checkbox
+            label={t('context.aiEnabled')}
+            hint={t('context.aiToggleHint')}
+            checked={profile.aiEnabled ?? profile.id !== 'general'}
+            onChange={(checked) => update({ aiEnabled: checked })}
+          />
+          <div>
+            <Field
+              label={t('context.speakerDisplay')}
+              hint={t(`context.speakerHint.${profile.speakerDisplay ?? 'inline'}`)}
+            >
+              <select
+                value={profile.speakerDisplay ?? 'inline'}
+                onChange={(e) => {
+                  const mode = SPEAKER_DISPLAY_MODES.find((item) => item === e.target.value);
+                  if (mode) update({ speakerDisplay: mode });
+                }}
+              >
+                {SPEAKER_DISPLAY_MODES.map((mode) => (
+                  <option key={mode} value={mode}>
+                    {t(`context.speakerMode.${mode}`)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <div className="mt-2 rounded-field bg-base-200 p-3">
+              <small className="muted">{t('context.speakerExampleLabel')}</small>
+              <p className="whitespace-pre-line">
+                {t(`context.speakerExample.${profile.speakerDisplay ?? 'inline'}`)}
+              </p>
+            </div>
+          </div>
           <Field label={t('context.instructions')} hint={t('context.instructionsHint')}>
             <textarea
               maxLength={4000}
@@ -285,56 +312,6 @@ export function Context({ snapshot }: { snapshot: SessionSnapshot }) {
                 onClick={() =>
                   update({ relationships: profile.relationships.filter((_, i) => i !== index) })
                 }
-              >
-                {t('app.delete')}
-              </button>
-            </div>
-          ))}
-        </section>
-        <section className="profile-section profile-glossary">
-          <div className="section-heading">
-            <h2>{t('context.glossary')}</h2>
-            <button
-              type="button"
-              onClick={() =>
-                update({ glossary: [...profile.glossary, { source: '', target: '' }] })
-              }
-            >
-              {t('app.add')}
-            </button>
-          </div>
-          {!profile.glossary.length && <p className="muted">{t('context.empty')}</p>}
-          {profile.glossary.map((term, index) => (
-            <div className="editable-row" key={index}>
-              <Field label={t('context.original')}>
-                <input
-                  required
-                  value={term.source}
-                  onChange={(e) =>
-                    update({
-                      glossary: profile.glossary.map((g, i) =>
-                        i === index ? { ...g, source: e.target.value } : g,
-                      ),
-                    })
-                  }
-                />
-              </Field>
-              <Field label={t('context.translated')}>
-                <input
-                  required
-                  value={term.target}
-                  onChange={(e) =>
-                    update({
-                      glossary: profile.glossary.map((g, i) =>
-                        i === index ? { ...g, target: e.target.value } : g,
-                      ),
-                    })
-                  }
-                />
-              </Field>
-              <button
-                type="button"
-                onClick={() => update({ glossary: profile.glossary.filter((_, i) => i !== index) })}
               >
                 {t('app.delete')}
               </button>

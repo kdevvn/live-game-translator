@@ -9,7 +9,6 @@ import { join } from 'node:path';
 const facts = {
   characters: [],
   relationships: [],
-  glossary: [],
   evidence: 'Hội thoại đã dịch',
 };
 
@@ -83,11 +82,13 @@ describe('Bổ sung hồ sơ nguyên tử', () => {
         const response = {
           ...facts,
           instructions: 'Quy tắc do AI tự tạo',
-          glossary: [{ source: 'Gate', target: 'Cổng' }],
+          relationships: [{ speaker: 'Father', listener: 'Son', self: 'ta', address: 'con' }],
         };
         db.applyProfileEnrichment('game', 0, response);
         expect(db.profiles().find((p) => p.id === 'game')?.instructions).toBe(instructions);
-        expect(db.profiles().find((p) => p.id === 'game')?.glossary).toEqual(response.glossary);
+        expect(db.profiles().find((p) => p.id === 'game')?.relationships).toEqual(
+          response.relationships,
+        );
         expect(db.profileProposals('game')).toHaveLength(0);
       } finally {
         db.close();
@@ -135,7 +136,7 @@ describe('Bổ sung hồ sơ nguyên tử', () => {
         ...DEFAULT_PROFILE,
         id: 'game',
         instructions: 'Cũ',
-        glossary: [{ source: 'Gate', target: 'Cũ' }],
+        relationships: [{ speaker: 'Father', listener: 'Son', self: 'ta', address: 'con' }],
       }),
     );
     legacy.close();
@@ -148,7 +149,10 @@ describe('Bổ sung hồ sơ nguyên tử', () => {
       db.applyProfileEnrichment(
         'game',
         0,
-        { ...facts, glossary: [{ source: 'Gate', target: 'Mới' }] },
+        {
+          ...facts,
+          relationships: [{ speaker: 'Father', listener: 'Son', self: 'tôi', address: 'con' }],
+        },
         session.id,
         20,
       );
@@ -161,7 +165,7 @@ describe('Bổ sung hồ sơ nguyên tử', () => {
       expect(db.profiles().find((p) => p.id === 'game')?.instructions).toBe('Cũ');
       db.applyProfileEnrichment('game', 0, {
         ...facts,
-        glossary: [{ source: 'Gate', target: 'Mới' }],
+        relationships: [{ speaker: 'Father', listener: 'Son', self: 'tôi', address: 'con' }],
       });
       expect(db.profileProposals('game')).toHaveLength(0);
     } finally {
@@ -177,31 +181,31 @@ describe('Bổ sung hồ sơ nguyên tử', () => {
         id: 'game',
         name: 'Game',
         instructions: 'Giữ tên riêng',
-        glossary: [{ source: 'Gate', target: 'Cửa' }],
+        relationships: [{ speaker: 'Father', listener: 'Son', self: 'ta', address: 'con' }],
       });
       const profile = db.profiles().find((p) => p.id === 'game')!;
       seedEvidence(db);
       db.applyProfileEnrichment(profile.id, profile.revision, {
         ...facts,
         characters: [{ name: 'Father', aliases: 'Dad' }],
-        glossary: [
-          { source: 'Gate', target: 'Cổng' },
-          { source: 'Road', target: 'Con đường' },
+        relationships: [
+          { speaker: 'Father', listener: 'Son', self: 'tôi', address: 'con' },
+          { speaker: 'Son', listener: 'Father', self: 'con', address: 'cha' },
         ],
       });
       const saved = db.profiles().find((p) => p.id === 'game')!;
       expect(saved.instructions).toBe('Giữ tên riêng');
       expect(saved.characters[0].name).toBe('Father');
-      expect(saved.glossary).toEqual([
-        { source: 'Gate', target: 'Cửa' },
-        { source: 'Road', target: 'Con đường' },
+      expect(saved.relationships).toEqual([
+        { speaker: 'Father', listener: 'Son', self: 'ta', address: 'con' },
+        { speaker: 'Son', listener: 'Father', self: 'con', address: 'cha' },
       ]);
       expect(db.profileProposals('game')).toHaveLength(1);
       const proposal = db.profileProposals('game')[0];
       db.resolveProfileProposal(proposal.id, 'reject');
       db.applyProfileEnrichment('game', saved.revision, {
         ...facts,
-        glossary: [{ source: 'Gate', target: 'Cổng' }],
+        relationships: [{ speaker: 'Father', listener: 'Son', self: 'tôi', address: 'con' }],
       });
       expect(db.profileProposals('game')).toHaveLength(0);
     } finally {
@@ -231,18 +235,21 @@ describe('Bổ sung hồ sơ nguyên tử', () => {
       db.saveProfile({
         ...DEFAULT_PROFILE,
         id: 'game',
-        glossary: [{ source: 'Gate', target: 'Cũ' }],
+        relationships: [{ speaker: 'Father', listener: 'Son', self: 'ta', address: 'con' }],
       });
       seedEvidence(db);
       db.applyProfileEnrichment('game', 0, {
         ...facts,
-        glossary: [{ source: 'Gate', target: 'Đề nghị' }],
+        relationships: [{ speaker: 'Father', listener: 'Son', self: 'tôi', address: 'con' }],
       });
       const proposal = db.profileProposals('game')[0];
       const profile = db.profiles().find((p) => p.id === 'game')!;
-      db.saveProfile({ ...profile, glossary: [{ source: 'Gate', target: 'Đã sửa tay' }] });
+      db.saveProfile({
+        ...profile,
+        relationships: [{ speaker: 'Father', listener: 'Son', self: 'cha', address: 'con' }],
+      });
       expect(() => db.resolveProfileProposal(proposal.id, 'accept')).toThrow('PROFILE_CHANGED');
-      expect(db.profiles().find((p) => p.id === 'game')?.glossary[0].target).toBe('Đã sửa tay');
+      expect(db.profiles().find((p) => p.id === 'game')?.relationships[0].self).toBe('cha');
     } finally {
       db.close();
     }

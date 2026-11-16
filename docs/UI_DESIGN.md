@@ -3,7 +3,7 @@
 ## Giao diện desktop hiện tại - 29/10/2026
 
 - Brief mới thay hướng framed-sheet bằng true-black-flat, seed 1801512945. React/CSS và IBM Plex Sans được giữ; nền tối trung tính thống nhất, control gọn, inspector theo snapshot phiên và command palette Ctrl+K.
-- Sidebar 210 px, titlebar 38 px với nút native Windows, gutter 16 px; bỏ sheet inset/topbar phụ. Preview giữ tỷ lệ nguồn, hội thoại là hai cột, chi tiết OCR/caption/glossary nằm trong inspector. Nút chạy và nút Lưu hiện ngay trước vùng công việc.
+- Sidebar 210 px, titlebar 38 px với nút native Windows, gutter 16 px; bỏ sheet inset/topbar phụ. Preview giữ tỷ lệ nguồn, hội thoại là hai cột, chi tiết OCR/caption/nhân vật nằm trong inspector. Nút chạy và nút Lưu hiện ngay trước vùng công việc.
 - Dark là mặc định mới, không ghi đè cấu hình đã lưu. Mỗi thời điểm toàn ứng dụng dùng một theme từ main; khả năng sáng/tối và vi/en có sẵn được giữ.
 - Audit, checklist đủ mục Section 14, lý do điều chỉnh sheet và kết quả kiểm tra được ghi tại [UI_AUDIT.md](UI_AUDIT.md). Các mục có ngày cũ bên dưới là lịch sử quyết định.
 
@@ -45,7 +45,7 @@
 Áp dụng skill **Taste Skill: Design Taste Frontend**, quy trình app screen. Style `framed-sheet`, seed `772522578`, thông tin gốc tại `.taste-skill/direction.json`. Không redraw.
 
 - Người dùng mở ứng dụng trong các phiên chơi dài; công việc thường xuyên là chọn nguồn, nhìn câu gốc/bản dịch và sửa xưng hô khi cần.
-- Các đối tượng thật là cửa sổ nguồn, vùng chữ, lời thoại, hồ sơ game, nhân vật, quan hệ và thuật ngữ. Không tạo số liệu tăng trưởng hoặc dashboard trang trí.
+- Các đối tượng thật là cửa sổ nguồn, vùng chữ, lời thoại, hồ sơ game, nhân vật và quan hệ. Không tạo số liệu tăng trưởng hoặc dashboard trang trí.
 - Màn hình Dịch trả lời: “Đang nhận chữ gì, bản dịch là gì?” Preview vùng chữ ở cạnh nội dung nhận dạng; hội thoại thành hai cột tiếng Anh/tiếng Việt.
 - Màn hình Hồ sơ trả lời: “Cần giữ tên gọi và quan hệ nào?” Quan hệ có hướng là thành phần riêng của sản phẩm.
 - Màn hình Cài đặt trả lời: “Dùng model nào và đọc bản dịch như thế nào?” Có preview phụ đề bên cạnh cấu hình cỡ chữ/nền.

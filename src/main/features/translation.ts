@@ -1,4 +1,6 @@
-/** Chuẩn hóa text OCR trước khi so sánh nội dung. */
+import { normalizeOcrText } from '../../shared/ocrText';
+
+/** Chuẩn hóa khoảng trắng cho bản dùng để so sánh nội dung. */
 export function normalizeText(text: string): string {
   return text.replace(/\s+/g, ' ').trim();
 }
@@ -54,7 +56,7 @@ export class TextStabilizer {
   constructor(private readonly delay: number) {}
   /** Trả câu mới khi ổn định; thao tác thủ công xác nhận ngay và ngăn tự động gửi trùng. */
   accept(input: string, now: number, immediate = false): string | null {
-    const text = normalizeText(input);
+    const text = normalizeOcrText(input);
     if (text !== this.candidate) {
       this.candidate = text;
       this.since = now;

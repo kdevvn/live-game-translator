@@ -21,6 +21,42 @@ vi.mock('react-i18next', () => ({
 afterEach(cleanup);
 
 describe('Token của từng lần dịch', () => {
+  it('tóm tắt đã lưu chỉ hiển thị như ngữ cảnh khi tính năng được bật', () => {
+    const session = {
+      id: 's',
+      profileId: 'general',
+      summary: 'Diễn biến đã nhớ.',
+      summarizedThrough: 20,
+      createdAt: 0,
+    };
+    const snapshot = {
+      settings: DEFAULT_SETTINGS,
+      resolvedTheme: 'light' as const,
+      hasApiKey: false,
+      profiles: [DEFAULT_PROFILE],
+      sessions: [session],
+      session,
+      status: 'idle' as const,
+      dialogues: [],
+      ocrText: '',
+      error: null,
+      overlayEditing: false,
+      overlayText: '',
+      generation: 0,
+      sourceId: '',
+      sourceName: '',
+      region: DEFAULT_REGION,
+    };
+    const { rerender } = render(<Translation snapshot={snapshot} />);
+    expect(screen.getByText('translation.summaryDisabled')).toBeTruthy();
+    expect(screen.queryByText(session.summary)).toBeNull();
+    rerender(
+      <Translation
+        snapshot={{ ...snapshot, settings: { ...DEFAULT_SETTINGS, summaryEnabled: true } }}
+      />,
+    );
+    expect(screen.getByText(session.summary)).toBeTruthy();
+  });
   it('hiển thị phiên được chọn sau khi trạng thái phiên cập nhật', async () => {
     const current = {
       id: 'current',
@@ -60,124 +96,6 @@ describe('Token của từng lần dịch', () => {
     );
     rerender(<Translation snapshot={{ ...snapshot, session: previous }} />);
     expect(select.value).toBe(previous.id);
-    vi.unstubAllGlobals();
-  });
-  it('gom đủ tùy chỉnh phụ đề, xem trước và hướng dẫn vị trí trong tab dịch', async () => {
-    const save = vi.fn().mockResolvedValue({ ok: true });
-    const overlay = vi.fn().mockResolvedValue({ ok: true });
-    vi.stubGlobal('app', { settings: save, overlay });
-    render(
-      <Translation
-        snapshot={{
-          settings: DEFAULT_SETTINGS,
-          resolvedTheme: 'light',
-          hasApiKey: false,
-          profiles: [DEFAULT_PROFILE],
-          sessions: [],
-          session: null,
-          status: 'idle',
-          dialogues: [],
-          ocrText: '',
-          error: null,
-          overlayEditing: false,
-          overlayText: '',
-          generation: 0,
-          sourceId: '',
-          sourceName: '',
-          region: DEFAULT_REGION,
-        }}
-      />,
-    );
-    expect(screen.getByText('translation.overlaySettingsHint')).toBeTruthy();
-    expect(screen.getByText('settings.preview')).toBeTruthy();
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.fontSize' }), {
-      target: { value: '36' },
-    });
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.overlayDuration' }), {
-      target: { value: '8' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'translation.overlay' }));
-    await vi.waitFor(() => expect(overlay).toHaveBeenCalledWith(true));
-    await vi.waitFor(() =>
-      expect(save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          overlayFontSize: 36,
-          overlayDurationSeconds: 8,
-        }),
-      ),
-    );
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.fontSize' }), {
-      target: { value: '101' },
-    });
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.overlayDuration' }), {
-      target: { value: '61' },
-    });
-    fireEvent.change(screen.getByRole('slider', { name: /settings.opacity/ }), {
-      target: { value: '75' },
-    });
-    cleanup();
-    await vi.waitFor(() =>
-      expect(save).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          overlayFontSize: 36,
-          overlayDurationSeconds: 8,
-          overlayOpacity: 0.75,
-        }),
-      ),
-    );
-    vi.unstubAllGlobals();
-  });
-  it('chỉ hiện một cỡ chữ theo chế độ và giữ riêng giá trị khi chuyển qua lại', async () => {
-    const save = vi.fn().mockResolvedValue({ ok: true });
-    vi.stubGlobal('app', { settings: save });
-    render(
-      <Translation
-        snapshot={{
-          settings: { ...DEFAULT_SETTINGS, overlayFontSize: 24, overlayFullscreenFontSize: 40 },
-          resolvedTheme: 'light',
-          hasApiKey: false,
-          profiles: [DEFAULT_PROFILE],
-          sessions: [],
-          session: null,
-          status: 'idle',
-          dialogues: [],
-          ocrText: '',
-          error: null,
-          overlayEditing: false,
-          overlayText: '',
-          generation: 0,
-          sourceId: '',
-          sourceName: '',
-          region: DEFAULT_REGION,
-        }}
-      />,
-    );
-    const fullscreen = screen.getByRole('checkbox', {
-      name: 'settings.overlayFullscreen',
-    }) as HTMLInputElement;
-    const size = screen.getByRole('spinbutton', { name: 'settings.fontSize' }) as HTMLInputElement;
-    expect(fullscreen.checked).toBe(false);
-    expect(size.max).toBe('100');
-    expect(size.value).toBe('24');
-    expect(screen.queryByRole('spinbutton', { name: 'settings.fullscreenFontSize' })).toBeNull();
-    expect(screen.queryByText('translation.overlayAutoSave')).toBeNull();
-    fireEvent.click(fullscreen);
-    expect(fullscreen.checked).toBe(true);
-    expect(size.value).toBe('40');
-    fireEvent.change(size, { target: { value: '44' } });
-    fireEvent.click(fullscreen);
-    expect(fullscreen.checked).toBe(false);
-    expect(size.value).toBe('24');
-    fireEvent.change(size, { target: { value: '30' } });
-    await vi.waitFor(() =>
-      expect(save).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          overlayFullscreen: false,
-          overlayFontSize: 30,
-          overlayFullscreenFontSize: 44,
-        }),
-      ),
-    );
     vi.unstubAllGlobals();
   });
   it('tắt toàn màn hình áp dụng ngay khi bỏ chọn', async () => {
@@ -237,7 +155,7 @@ describe('Token của từng lần dịch', () => {
       />,
     );
     fireEvent.click(screen.getByRole('checkbox', { name: 'settings.overlayFullscreen' }));
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.fontSize' }), {
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.fullscreenFontSize' }), {
       target: { value: '44' },
     });
     fireEvent.change(screen.getByRole('slider', { name: /settings.opacity/ }), {
@@ -280,8 +198,8 @@ describe('Token của từng lần dịch', () => {
         }}
       />,
     );
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.fontSize' }), {
-      target: { value: '101' },
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.fullscreenFontSize' }), {
+      target: { value: '100' },
     });
     fireEvent.change(screen.getByRole('slider', { name: /settings.opacity/ }), {
       target: { value: '65' },
@@ -330,7 +248,7 @@ describe('Token của từng lần dịch', () => {
     );
     fireEvent.click(screen.getByRole('checkbox', { name: 'settings.overlayFullscreen' }));
     await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.fontSize' }), {
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'settings.fullscreenFontSize' }), {
       target: { value: '42' },
     });
     fireEvent.change(screen.getByRole('slider', { name: /settings.opacity/ }), {

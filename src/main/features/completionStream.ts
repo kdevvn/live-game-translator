@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { TokenUsage } from '../../shared/types';
-import { modelIdSchema } from '../../shared/types';
+import { modelIdSchema, translationSchema } from '../../shared/types';
 
 const MAX_CONTENT_LENGTH = 128000;
 const chunkSchema = z.object({
@@ -46,12 +46,8 @@ export function readTokenUsage(value: unknown): TokenUsage | undefined {
     : undefined;
 }
 
-/**
- * Chỉ lấy giá trị chuỗi translation ở cấp đầu của JSON để hiển thị bản nháp.
- * Không đưa JSON thô lên UI, không đoán phần escape/Unicode còn thiếu ở cuối chunk.
- * Schema đầy đủ vẫn phải được kiểm tra khi request kết thúc.
- */
-export function translationPreview(content: string): string {
+/** Đọc chuỗi cấp đầu trong JSON đang stream; chỉ cho phép translation chưa đóng chuỗi. */
+function stringFieldPreview(content: string, field: 'translation' | 'speaker'): string | undefined {
   let index = 0;
   /** Bỏ khoảng trắng giữa các token, không thay đổi nội dung chuỗi JSON. */
   function whitespace(): void {
@@ -85,22 +81,35 @@ export function translationPreview(content: string): string {
     }
   }
   whitespace();
-  if (content[index++] !== '{') return '';
+  if (content[index++] !== '{') return undefined;
   while (index < content.length) {
     whitespace();
     const key = string();
-    if (!key?.complete) return '';
+    if (!key?.complete) return undefined;
     whitespace();
-    if (content[index++] !== ':') return '';
+    if (content[index++] !== ':') return undefined;
     whitespace();
     const value = string();
-    if (!value) return '';
-    if (key.text === 'translation') return value.text;
-    if (!value.complete || !['speaker', 'listener'].includes(key.text)) return '';
+    if (!value) return undefined;
+    if (key.text === field)
+      return value.complete || field === 'translation' ? value.text : undefined;
+    if (!value.complete || !['translation', 'speaker', 'listener'].includes(key.text))
+      return undefined;
     whitespace();
-    if (content[index++] !== ',') return '';
+    if (content[index++] !== ',') return undefined;
   }
-  return '';
+  return undefined;
+}
+
+/** Lấy chữ dịch đang stream, không phát JSON thô hoặc escape/Unicode còn thiếu ra giao diện. */
+export function translationPreview(content: string): string {
+  return stringFieldPreview(content, 'translation') ?? '';
+}
+
+/** Chỉ phát tên khi chuỗi speaker đã đóng và hợp lệ; kết quả cuối vẫn cần kiểm tra toàn schema. */
+export function speakerPreview(content: string): string | undefined {
+  const parsed = translationSchema.shape.speaker.safeParse(stringFieldPreview(content, 'speaker'));
+  return parsed.success ? parsed.data : undefined;
 }
 
 /**

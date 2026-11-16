@@ -35,7 +35,6 @@ describe('OpenRouter', () => {
                   content: JSON.stringify({
                     characters: [],
                     relationships: [],
-                    glossary: [],
                     evidence: 'test',
                   }),
                 },
@@ -94,7 +93,7 @@ describe('OpenRouter', () => {
       async () => response,
     ).translate('model', [], controller.signal, progress);
     const result = expect(task).rejects.toThrow('CANCELLED');
-    await vi.waitFor(() => expect(progress).toHaveBeenCalledWith('Chào.'));
+    await vi.waitFor(() => expect(progress).toHaveBeenCalledWith('Chào.', 'unknown'));
     controller.abort();
     await result;
     expect(cancel).toHaveBeenCalledTimes(1);
@@ -393,6 +392,11 @@ describe('OpenRouter', () => {
       expect(finished).toBe(false);
       const body = JSON.parse(String(transport.mock.calls[0][1]?.body));
       expect(body.stream).toBe(true);
+      expect(Object.keys(body.response_format.json_schema.schema.properties)).toEqual([
+        'speaker',
+        'translation',
+        'listener',
+      ]);
       expect(body.provider.sort).toBe('latency');
       expect(body.reasoning).toEqual({ enabled: false, exclude: true });
       feed?.enqueue(
@@ -506,7 +510,6 @@ describe('OpenRouter', () => {
     let content = JSON.stringify({
       characters: [],
       relationships: [],
-      glossary: [],
       evidence: 'Chưa rõ',
     });
     const transport = vi
@@ -560,7 +563,7 @@ describe('OpenRouter', () => {
     await api.models();
     const progress = vi.fn();
     await api.translate('model', [], new AbortController().signal, progress);
-    expect(progress).toHaveBeenCalledWith('Chào');
+    expect(progress).toHaveBeenCalledWith('Chào', 'unknown');
     expect(JSON.parse(String(transport.mock.calls[1][1]?.body)).response_format).toBeUndefined();
     supports = true;
     await api.models();

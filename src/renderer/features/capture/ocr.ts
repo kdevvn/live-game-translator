@@ -1,3 +1,5 @@
+import { normalizeOcrText } from '../../../shared/ocrText';
+
 /** Dòng do PaddleOCR nhận trực tiếp trên ảnh vùng chọn, điểm tin cậy trong khoảng 0-1. */
 export interface OcrLine {
   text: string;
@@ -23,6 +25,7 @@ export type OcrResponse = { id: number; reading: OcrReading } | { id: number; er
 const MIN_LINE_SCORE = 0.6;
 const MIN_CONFIDENCE = MIN_LINE_SCORE * 100;
 const WORKER_TIMEOUT_MS = 60000;
+const SAME_ROW_OVERLAP = 0.5;
 
 /** Giữ mọi dòng đủ rõ theo thứ tự đọc, không suy đoán hoặc sửa chữ từ ngữ cảnh. */
 export function readOcrLines(lines: OcrLine[]): OcrReading {
@@ -30,10 +33,35 @@ export function readOcrLines(lines: OcrLine[]): OcrReading {
     .filter(
       (line) => Number.isFinite(line.score) && line.score >= MIN_LINE_SCORE && line.text.trim(),
     )
-    .sort((a, b) => (a.poly[0]?.[1] ?? 0) - (b.poly[0]?.[1] ?? 0));
+    .map((line) => {
+      const ys = line.poly.map((point) => point[1]);
+      const xs = line.poly.map((point) => point[0]);
+      return { ...line, top: Math.min(...ys), bottom: Math.max(...ys), left: Math.min(...xs) };
+    })
+    .sort((a, b) => a.top - b.top || a.left - b.left);
+  const rows: (typeof selected)[] = [];
+  for (const line of selected) {
+    const row = rows.at(-1);
+    const first = row?.[0];
+    const overlap = first ? Math.min(first.bottom, line.bottom) - Math.max(first.top, line.top) : 0;
+    if (
+      first &&
+      overlap > 0 &&
+      overlap >= Math.min(first.bottom - first.top, line.bottom - line.top) * SAME_ROW_OVERLAP
+    )
+      row?.push(line);
+    else rows.push([line]);
+  }
   const length = selected.reduce((sum, line) => sum + line.text.length, 0);
   return {
-    text: selected.map((line) => line.text.trim()).join(' '),
+    text: rows
+      .map((row) =>
+        row
+          .sort((a, b) => a.left - b.left)
+          .map((line) => line.text.trim())
+          .join(' '),
+      )
+      .join('\n'),
     confidence: length
       ? (selected.reduce((sum, line) => sum + line.score * line.text.length, 0) / length) * 100
       : 0,
@@ -43,7 +71,7 @@ export function readOcrLines(lines: OcrLine[]): OcrReading {
 /** Chọn văn bản đủ tin cậy để chuyển sang phiên dịch; không sửa nội dung nhận dạng. */
 export function readableText(reading: OcrReading): string {
   return Number.isFinite(reading.confidence) && reading.confidence >= MIN_CONFIDENCE
-    ? reading.text.replace(/\s+/g, ' ').trim()
+    ? normalizeOcrText(reading.text)
     : '';
 }
 

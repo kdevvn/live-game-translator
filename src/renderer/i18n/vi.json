@@ -1,9 +1,4 @@
 {
-  "field": {
-    "range": "Giới hạn: {{min}}–{{max}}.",
-    "minimum": "Tối thiểu: {{min}}.",
-    "maximum": "Tối đa: {{max}}."
-  },
   "app": {
     "name": "Live Game Translator",
     "subtitle": "Không bỏ lỡ một lời thoại",
@@ -33,7 +28,6 @@
     "subtitle": "Phụ đề hiện tại",
     "subtitleEmpty": "Phụ đề sẽ xuất hiện khi có câu mới.",
     "manage": "Quản lý",
-    "glossaryEmpty": "Chưa có thuật ngữ trong hồ sơ này.",
     "charactersEmpty": "Chưa có nhân vật được ghi nhớ."
   },
   "commands": {
@@ -112,9 +106,6 @@
     "overlay": "Chỉnh phụ đề nổi",
     "overlayDone": "Khóa vị trí phụ đề",
     "closeFullscreenOverlay": "Tắt overlay toàn màn hình",
-    "overlaySettingsHint": "Chỉnh cách hiển thị phụ đề ngay tại nơi bạn dịch.",
-    "overlayPreview": "Xem trước kiểu chữ",
-    "overlayFullscreenHint": "Phụ đề phủ toàn màn hình. Tắt chế độ này để kéo và chỉnh vị trí cửa sổ phụ đề.",
     "overlayHint": "Kéo để di chuyển. Khóa lại để bấm xuyên qua phụ đề.",
     "profile": "Hồ sơ game",
     "newSession": "Phiên mới",
@@ -122,6 +113,7 @@
     "selectSession": "Chọn phiên để tiếp tục",
     "summary": "Ngữ cảnh đã nhớ",
     "summaryEmpty": "Tóm tắt tự động sau khi có đủ hội thoại.",
+    "summaryDisabled": "Tóm tắt hội thoại đang tắt. Có thể bật trong Cài đặt.",
     "needsSetup": "OCR có thể chạy ngay. Để dịch, chọn nhà cung cấp và model trong Cài đặt; OpenRouter cần API key.",
     "count": "{{count}} lời thoại",
     "selectProfile": "Chọn hoặc tạo hồ sơ"
@@ -141,14 +133,11 @@
     "self": "Tự xưng",
     "address": "Gọi người nghe",
     "direction": "Mỗi dòng là một chiều. Chiều ngược lại cần quy tắc riêng.",
-    "glossary": "Thuật ngữ",
-    "original": "Từ gốc",
-    "translated": "Bản dịch đã chốt",
-    "empty": "Chưa có dữ liệu. Thêm khi bạn gặp nhân vật hoặc thuật ngữ mới.",
+    "empty": "Chưa có dữ liệu. Thêm khi bạn gặp nhân vật mới.",
     "defaultName": "Chung",
     "savedHint": "Lưu quy tắc trong hồ sơ đang dùng sẽ tạm dừng phiên để tránh áp dụng ngữ cảnh cũ.",
     "clearProfile": "Xóa dữ liệu hồ sơ",
-    "confirmClear": "Xóa nhân vật, cách xưng hô, thuật ngữ và đề xuất AI của hồ sơ “{{name}}”? Tên, quy tắc dịch ưu tiên và lịch sử hội thoại sẽ được giữ lại. AI chỉ học từ hội thoại mới; phiên đang dùng sẽ tạm dừng.",
+    "confirmClear": "Xóa nhân vật, cách xưng hô và đề xuất AI của hồ sơ “{{name}}”? Tên, quy tắc dịch ưu tiên và lịch sử hội thoại sẽ được giữ lại. AI chỉ học từ hội thoại mới; phiên đang dùng sẽ tạm dừng.",
     "aiTitle": "Hồ sơ bằng AI",
     "aiEnabled": "Tự bổ sung hồ sơ bằng AI",
     "aiToggleHint": "Áp dụng sau khi lưu. AI chỉ thêm phần thiếu; thay đổi dữ liệu đã có cần bạn duyệt.",
@@ -169,7 +158,24 @@
     "accept": "Chấp nhận",
     "reject": "Bỏ đề xuất",
     "changedElsewhere": "Hồ sơ đã được cập nhật. Bản đang nhập vẫn được giữ; tải lại để xem dữ liệu mới trước khi lưu.",
-    "reload": "Tải lại hồ sơ"
+    "reload": "Tải lại hồ sơ",
+    "speakerDisplay": "Kiểu hiển thị tên người nói",
+    "speakerMode": {
+      "inline": "Đầu dòng (mặc định)",
+      "separateLine": "Dòng riêng",
+      "none": "Không có tên"
+    },
+    "speakerHint": {
+      "inline": "Tên nằm trước lời thoại, trên cùng một dòng. Lời thoại có thể kéo dài nhiều dòng.",
+      "separateLine": "Tên nằm ở dòng riêng phía trên. Các dòng bên dưới là lời thoại.",
+      "none": "Toàn bộ chữ là lời thoại. AI dựa vào hồ sơ và ngữ cảnh để xác định người nói; khi chưa rõ sẽ để chưa xác định."
+    },
+    "speakerExampleLabel": "Ví dụ phụ đề trong game",
+    "speakerExample": {
+      "inline": "Dutch They may be okay,\nwe don't know.",
+      "separateLine": "Dutch\nThey may be okay,\nwe don't know.",
+      "none": "They may be okay,\nwe don't know."
+    }
   },
   "settings": {
     "title": "Cài đặt",
@@ -212,6 +218,8 @@
     "preview": "Ta sẽ không bỏ con lại phía sau.",
     "saveHint": "Cài đặt được tự động lưu. Đổi nhà cung cấp, địa chỉ, model dịch hoặc key/token sẽ tạm dừng phiên; đổi model nền không dừng dịch.",
     "summaryModel": "Model tóm tắt",
+    "summaryEnabled": "Dùng tóm tắt hội thoại",
+    "summaryEnabledHint": "Mặc định tắt. Khi bật, tạo tóm tắt sau mỗi {{count}} câu dịch thành công và dùng làm ngữ cảnh. Khi tắt, giữ bản đã lưu nhưng không gửi cho model.",
     "profileModel": "Model hồ sơ game",
     "useTranslationModel": "Dùng model dịch",
     "effectiveModel": "Model sử dụng: {{model}}",

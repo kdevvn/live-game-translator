@@ -1,4 +1,4 @@
-import { DEFAULT_PROFILE } from '../../shared/defaults';
+import { DEFAULT_PROFILE, HISTORY_LIMIT } from '../../shared/defaults';
 import { describe, expect, it, vi } from 'vitest';
 import { openDatabase } from '../database';
 import { SessionController } from './session';
@@ -6,6 +6,231 @@ import { OpenRouter } from './openRouter';
 import { getOverlayText } from '../../shared/overlay';
 
 describe('Vòng đời phiên dịch', () => {
+  it.each(['inline', 'none'] as const)(
+    '%s ghép OCR, lịch sử và lời dịch thành một dòng',
+    async (speakerDisplay) => {
+      const db = openDatabase(':memory:');
+      db.saveProfile({ ...DEFAULT_PROFILE, speakerDisplay });
+      const api = new OpenRouter(() => 'key');
+      const translate = vi.spyOn(api, 'translate').mockResolvedValue({
+        speaker: 'Dutch',
+        listener: 'unknown',
+        translation: 'Họ có thể ổn,\nchúng ta chưa biết.',
+      });
+      const app = new SessionController(db, api, () => undefined);
+      try {
+        app.updateSettings({ ...app.snapshot().settings, model: 'test' });
+        app.environment(false, true);
+        app.openSession('general');
+        app.begin();
+        const input = `${speakerDisplay === 'inline' ? 'Dutch ' : ''}They may be okay,\nwe don’t know.`;
+        app.ocr(input, app.snapshot().generation, 1, true);
+        await new Promise((resolve) => setImmediate(resolve));
+        const expected = input.replace(/\s+/gu, ' ');
+        expect(app.snapshot().ocrText).toBe(expected);
+        expect(db.dialogues(app.snapshot().session!.id)[0]).toMatchObject({
+          text: expected,
+          translation: 'Họ có thể ổn, chúng ta chưa biết.',
+        });
+        expect(JSON.parse(translate.mock.calls[0][1].at(-1)!.content).ocr).toBe(
+          'They may be okay, we don’t know.',
+        );
+      } finally {
+        app.stop();
+        db.close();
+      }
+    },
+  );
+  it.each([true, false])(
+    'hiện tên trước khi kết thúc stream, tên đến trước chữ: %s',
+    async (speakerFirst) => {
+      const db = openDatabase(':memory:');
+      db.saveProfile({ ...DEFAULT_PROFILE, speakerDisplay: 'none' });
+      let feed: ReadableStreamDefaultController<Uint8Array> | undefined;
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          feed = controller;
+        },
+      });
+      const api = new OpenRouter(
+        () => 'key',
+        async () => new Response(stream, { headers: { 'content-type': 'text/event-stream' } }),
+      );
+      const app = new SessionController(db, api, () => undefined);
+      const encoder = new TextEncoder();
+      try {
+        app.updateSettings({ ...app.snapshot().settings, model: 'test' });
+        app.environment(false, true);
+        app.openSession('general');
+        app.begin();
+        app.ocr('Arthur you know.', app.snapshot().generation, 1, true);
+        feed?.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ choices: [{ delta: { content: speakerFirst ? '{"speaker":"Arthur","translation":"cậu' : '{"translation":"cậu' } }] })}\n\n`,
+          ),
+        );
+        await vi.waitFor(() => expect(app.snapshot().overlayText).toBe('cậu'));
+        if (!speakerFirst) {
+          expect(app.snapshot().dialogues[0].speaker).toBe('unknown');
+          feed?.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ choices: [{ delta: { content: '","speaker":"Arthur"' } }] })}\n\n`,
+            ),
+          );
+          await vi.waitFor(() => expect(app.snapshot().dialogues[0].speaker).toBe('Arthur'));
+        }
+        expect(app.snapshot().dialogues[0]).toMatchObject({ status: 'pending', speaker: 'Arthur' });
+        expect(db.dialogues(app.snapshot().session!.id)[0].translation).toBe('');
+        feed?.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ choices: [{ delta: { content: speakerFirst ? ' biết mà.","listener":"unknown"}' : ',"listener":"unknown"}' }, finish_reason: 'stop' }] })}\n\ndata: [DONE]\n\n`,
+          ),
+        );
+        feed?.close();
+        feed = undefined;
+        await vi.waitFor(() => expect(app.snapshot().dialogues[0].status).toBe('translated'));
+        expect(app.snapshot().dialogues[0]).toMatchObject({
+          speaker: 'Arthur',
+          translation: speakerFirst ? 'cậu biết mà.' : 'cậu',
+        });
+      } finally {
+        app.stop();
+        await new Promise((resolve) => setImmediate(resolve));
+        db.close();
+      }
+    },
+  );
+  it('tách tên khỏi dữ liệu dịch, giữ người nói đã nhận diện và giữ nguyên OCR trong lịch sử', async () => {
+    const db = openDatabase(':memory:');
+    db.saveProfile({
+      ...DEFAULT_PROFILE,
+      characters: [{ id: 'arthur', name: 'Arthur', aliases: '' }],
+    });
+    const api = new OpenRouter(() => 'key');
+    const translate = vi
+      .spyOn(api, 'translate')
+      .mockImplementation(async (_model, _messages, _signal, preview) => {
+        preview?.('Arthur cậu biết mà.');
+        return { translation: 'Arthur cậu biết mà.', speaker: 'unknown', listener: 'unknown' };
+      });
+    const app = new SessionController(db, api, () => undefined);
+    try {
+      app.updateSettings({ ...app.snapshot().settings, model: 'test' });
+      app.environment(false, true);
+      app.openSession('general');
+      app.begin();
+      app.ocr('Arthur you know.', app.snapshot().generation, 1, true);
+      expect(app.snapshot().overlayText).toBe('cậu biết mà.');
+      await new Promise((resolve) => setImmediate(resolve));
+      expect(JSON.parse(translate.mock.calls[0][1].at(-1)!.content)).toEqual({
+        task: 'translate_current',
+        ocr: 'you know.',
+        speaker: 'Arthur',
+      });
+      expect(app.snapshot().dialogues[0]).toMatchObject({
+        text: 'Arthur you know.',
+        translation: 'cậu biết mà.',
+        speaker: 'Arthur',
+      });
+    } finally {
+      app.stop();
+      db.close();
+    }
+  });
+  it.each([true, false])(
+    'giữ một dòng tên, ghép lời thoại trong OCR, prompt và lịch sử, thủ công: %s',
+    async (manual) => {
+      const db = openDatabase(':memory:');
+      const api = new OpenRouter(() => 'key');
+      const translate = vi.spyOn(api, 'translate').mockResolvedValue({
+        translation: 'Chúng ta chưa biết.',
+        speaker: 'Dutch',
+        listener: 'unknown',
+      });
+      const app = new SessionController(db, api, () => undefined);
+      try {
+        db.saveProfile({ ...DEFAULT_PROFILE, speakerDisplay: 'separateLine' });
+        app.emit();
+        app.updateSettings({ ...app.snapshot().settings, model: 'test', autoTranslate: true });
+        app.environment(false, true);
+        app.openSession('general');
+        app.begin();
+        const text = "Dutch\nThey may be okay,\nwe don't know.";
+        app.ocr(text, app.snapshot().generation, 1, manual);
+        if (!manual) {
+          vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 200);
+          app.ocr(text, app.snapshot().generation, 1);
+          vi.restoreAllMocks();
+        }
+        await new Promise((resolve) => setImmediate(resolve));
+        expect(app.snapshot().ocrText).toBe("Dutch\nThey may be okay, we don't know.");
+        expect(app.snapshot().dialogues[0]?.text).toBe("Dutch\nThey may be okay, we don't know.");
+        expect(JSON.parse(translate.mock.calls[0][1].at(-1)!.content)).toMatchObject({
+          speaker: 'Dutch',
+          ocr: "They may be okay, we don't know.",
+        });
+      } finally {
+        app.stop();
+        db.close();
+        vi.restoreAllMocks();
+      }
+    },
+  );
+  it.each(['openRouter', 'lmStudio', 'ollama'] as const)(
+    '%s gửi lịch sử theo lô và giữ nguyên đầu lịch sử giữa các câu',
+    async (provider) => {
+      const db = openDatabase(':memory:');
+      db.saveProfile({ ...DEFAULT_PROFILE, speakerDisplay: 'none' });
+      const api = new OpenRouter(() => 'key');
+      const translate = vi.spyOn(api, 'translate').mockResolvedValue({
+        translation: 'Chào.',
+        speaker: 'unknown',
+        listener: 'unknown',
+      });
+      vi.spyOn(api, 'summarize').mockResolvedValue('Tóm tắt.');
+      const app = new SessionController(db, api, () => undefined);
+      try {
+        app.updateSettings({
+          ...app.snapshot().settings,
+          provider,
+          model: 'test',
+          lmStudioModel: 'test',
+          ollamaModel: 'test',
+        });
+        app.environment(false, true);
+        app.openSession('general');
+        app.begin();
+        for (let index = 1; index <= HISTORY_LIMIT * 2 + 1; index++) {
+          app.ocr(`Source ${index}`, app.snapshot().generation, 1, true);
+          await new Promise((resolve) => setImmediate(resolve));
+        }
+        const first = translate.mock.calls[HISTORY_LIMIT][1];
+        const next = translate.mock.calls[HISTORY_LIMIT + 1][1];
+        expect(next.slice(0, first.length - 1)).toEqual(first.slice(0, -1));
+        for (const [index, start, count] of [
+          [HISTORY_LIMIT + 1, 1, HISTORY_LIMIT + 1],
+          [HISTORY_LIMIT * 2 - 1, 1, HISTORY_LIMIT * 2 - 1],
+          [HISTORY_LIMIT * 2, HISTORY_LIMIT + 1, HISTORY_LIMIT],
+        ]) {
+          const messages = translate.mock.calls[index][1];
+          const sources = messages
+            .map((message) => (message.role === 'user' ? JSON.parse(message.content) : {}))
+            .filter((message) => message.ocr && !message.task)
+            .map((message) => message.ocr);
+          expect(sources).toEqual(
+            Array.from({ length: count }, (_, offset) => `Source ${start + offset}`),
+          );
+          expect(messages.at(-1)?.content).toBe(
+            JSON.stringify({ task: 'translate_current', ocr: `Source ${index + 1}` }),
+          );
+        }
+      } finally {
+        app.stop();
+        db.close();
+      }
+    },
+  );
+
   it('overlay tự ẩn dù OCR lặp chữ, câu mới hiện lại và dừng xóa timer', async () => {
     vi.useFakeTimers();
     const db = openDatabase(':memory:');
@@ -160,7 +385,7 @@ describe('Vòng đời phiên dịch', () => {
       expect(transport).toHaveBeenCalledTimes(1);
       expect(
         JSON.parse(String(transport.mock.calls[0][1]?.body)).messages.at(-1).content,
-      ).toContain(original);
+      ).toContain('That can NOT be my future');
       expect(app.snapshot().dialogues[0]).toMatchObject({
         text: original,
         usage: { inputTokens: 321, outputTokens: 22 },
@@ -228,7 +453,7 @@ describe('Vòng đời phiên dịch', () => {
     'stream %s: hiện sớm nhưng chỉ lưu kết quả hoàn chỉnh',
     async (ending) => {
       const db = openDatabase(':memory:');
-      db.saveProfile(DEFAULT_PROFILE);
+      db.saveProfile({ ...DEFAULT_PROFILE, speakerDisplay: 'none' });
       let feed: ReadableStreamDefaultController<Uint8Array> | undefined;
       const response = new Response(
         new ReadableStream<Uint8Array>({
@@ -259,14 +484,18 @@ describe('Vòng đời phiên dịch', () => {
         feed?.enqueue(
           encoder.encode(
             'data: ' +
-              JSON.stringify({ choices: [{ delta: { content: '{"translation":"Đi' } }] }) +
+              JSON.stringify({
+                choices: [{ delta: { content: '{"speaker":"Father","translation":"Đi' } }],
+              }) +
               '\n\n',
           ),
         );
         await vi.waitFor(() => expect(getOverlayText(app.snapshot())).toBe('Đi'));
         expect(app.snapshot().dialogues[0].status).toBe('pending');
+        expect(app.snapshot().dialogues[0].speaker).toBe('Father');
         expect(app.snapshot().dialogues[0].firstTextMs).toBeGreaterThanOrEqual(0);
         expect(db.dialogues(sessionId)[0].translation).toBe('');
+        expect(db.dialogues(sessionId)[0].speaker).toBe('unknown');
         if (ending === 'cancel') {
           app.openSession('general');
           await new Promise((resolve) => setImmediate(resolve));
@@ -274,6 +503,7 @@ describe('Vòng đời phiên dịch', () => {
           expect(db.dialogues(sessionId)[0]).toMatchObject({
             status: 'cancelled',
             translation: '',
+            speaker: 'unknown',
           });
         } else {
           const event =
@@ -281,7 +511,7 @@ describe('Vòng đời phiên dịch', () => {
               ? {
                   choices: [
                     {
-                      delta: { content: ' sát ta.","speaker":"Father","listener":"Son"}' },
+                      delta: { content: ' sát ta.","listener":"Son"}' },
                       finish_reason: 'stop',
                     },
                   ],
@@ -296,6 +526,9 @@ describe('Vòng đời phiên dịch', () => {
           );
           expect(db.dialogues(sessionId)[0].translation).toBe(
             ending === 'complete' ? 'Đi sát ta.' : '',
+          );
+          expect(db.dialogues(sessionId)[0].speaker).toBe(
+            ending === 'complete' ? 'Father' : 'unknown',
           );
           expect(getOverlayText(app.snapshot())).toBe(ending === 'complete' ? 'Đi sát ta.' : '');
         }
@@ -391,6 +624,7 @@ describe('Vòng đời phiên dịch', () => {
       model: 'test-model',
       autoTranslate: true,
       duplicateThreshold: 0,
+      summaryEnabled: true,
     });
     app.environment(false, true);
     app.openSession('general');

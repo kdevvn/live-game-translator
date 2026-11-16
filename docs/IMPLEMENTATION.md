@@ -66,7 +66,7 @@
 
 - Người dùng yêu cầu tiếp tục chỉ miễn phí. Đọc riêng metadata trong database ở chế độ chỉ đọc, không đọc key hoặc nội dung hội thoại: câu có API 3.561 ms bắt đầu hiện bản nháp ở 2.530 ms, queue 0 ms. Một câu khác API 6.422 ms có firstText 5.718 ms; câu sau đó chờ queue 2.995 ms. Đây là các phép đo trong ứng dụng, không phải thời gian kết nối TCP thuần hoặc benchmark có kiểm soát.
 - Cấu hình vẫn là `openrouter/free`. Tài liệu chính thức xác nhận router chọn model miễn phí ngẫu nhiên; streaming không loại bỏ thời gian chờ chữ đầu. Không đổi model ngầm hoặc gọi dịch trả phí. Danh sách model miễn phí có structured outputs đã được kiểm tra qua API công khai; chưa benchmark từng model nên không gắn nhãn model nhanh nhất.
-- Bỏ metadata quản lý hồ sơ và các danh sách rỗng khỏi prompt; giữ nguyên quy tắc/nhân vật/quan hệ/thuật ngữ và giới hạn hội thoại. Tăng PROMPT_VERSION lên 3 để không tái dùng cache của prompt cũ. Đây là giảm payload, chưa có phép đo API chứng minh giảm độ trễ thực tế hoặc đạt dưới một giây.
+- Bỏ metadata quản lý hồ sơ và các danh sách rỗng khỏi prompt; giữ nguyên quy tắc/nhân vật/quan hệ và giới hạn hội thoại. Tăng PROMPT_VERSION lên 3 để không tái dùng cache của prompt cũ. Đây là giảm payload, chưa có phép đo API chứng minh giảm độ trễ thực tế hoặc đạt dưới một giây.
 - Red: test tái hiện prompt còn chứa id/tên/revision và danh sách rỗng thất bại. Green: test qua sau sửa, kèm test bảo toàn tất cả dữ kiện đã xác nhận. 68 unit/integration/component test đạt; typecheck, lint, format và build source đạt. Không đổi IPC/UI/vòng đời capture; không chạy lại E2E cho thay đổi thuần prompt này. Kết quả 7 E2E ở bảng dưới thuộc lần kiểm tra pipeline streaming trước đó.
 
 ## Phần đã triển khai
@@ -76,7 +76,7 @@
 - Capture một cửa sổ, preview giới hạn tần suất, crop chuẩn hóa, OCR worker offline, lọc ảnh/text trùng và câu ổn định.
 - OpenRouter model list, JSON schema, validation response, timeout, hủy và một retry cho 429/5xx; không tự fallback model.
 - Overlay click-through/chỉnh vị trí, đồng bộ theme/locale; lịch sử sửa được, thử lại đoạn lỗi.
-- SQLite migration, hồ sơ có phiên bản, quan hệ có hướng, glossary, lịch sử phiên, cache có ngữ cảnh và tóm tắt lúc rảnh.
+- SQLite migration, hồ sơ có phiên bản, quan hệ có hướng, lịch sử phiên, cache có ngữ cảnh và tóm tắt lúc rảnh.
 - Key mã hóa bằng safeStorage và không quay lại renderer; theme sáng/tối/system, i18n Việt/Anh.
 
 ## Quyết định khi triển khai
@@ -84,7 +84,7 @@
 - Electron 45 và better-sqlite3 13 tương thích với nhau; dùng lockfile để giữ phiên bản đã kiểm tra. Bản Electron ban đầu được thay sau khi audit phát hiện advisory.
 - Test SQLite chạy trên Node đi kèm Electron để tránh lệch ABI với Node cài trên máy.
 - Đổi tên module `capture.ts` thành `captureRuntime.ts` để tránh đụng `Capture.tsx` trên Windows không phân biệt hoa/thường.
-- Hồ sơ lưu characters/relationships/glossary trong một document JSON có revision trong bảng profiles, cập nhật nguyên tử. Chưa tách ba bảng khi chưa có nhu cầu truy vấn độc lập.
+- Hồ sơ lưu characters/relationships trong một document JSON có revision trong bảng profiles, cập nhật nguyên tử. Chưa tách bảng khi chưa có nhu cầu truy vấn độc lập.
 - OCR hiện dùng SDK PaddleOCR chính thức trong worker riêng, model PP-OCRv5 mobile detection và recognition tiếng Anh. ONNX WASM/model đi cùng build; không cần Python/server. Thiết kế Tesseract trước đây đã được thay thế; xem phép đo cuối tài liệu.
 - Token đầu vào được ước lượng bảo thủ bằng số byte UTF-8 cộng overhead; ngân sách có thể chặt hơn tokenizer thực. Không tuyên bố tính token chính xác cho mọi model.
 - Preview UI dùng bridge giả lập riêng ngoài bộ cài; ứng dụng production luôn dùng preload thật.

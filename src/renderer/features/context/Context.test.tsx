@@ -5,6 +5,11 @@ import { Context } from './Context';
 import { DEFAULT_PROFILE, DEFAULT_REGION, DEFAULT_SETTINGS } from '../../../shared/defaults';
 import type { SessionSnapshot } from '../../../shared/types';
 
+it('không còn phần chỉnh thuật ngữ trong hồ sơ', () => {
+  render(<Context snapshot={state()} />);
+  expect(screen.queryByText('context.glossary')).toBeNull();
+});
+
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 afterEach(() => {
   cleanup();
@@ -35,6 +40,45 @@ function state(): SessionSnapshot {
 }
 
 describe('Hồ sơ có bổ sung AI', () => {
+  it('mặc định tên đầu dòng, đổi ví dụ theo kiểu và lưu riêng từng hồ sơ', async () => {
+    const saveProfile = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('app', { saveProfile, session: vi.fn().mockResolvedValue({ ok: true }) });
+    render(
+      <Context
+        snapshot={{
+          ...state(),
+          profiles: [
+            DEFAULT_PROFILE,
+            { ...DEFAULT_PROFILE, id: 'game', name: 'Game', speakerDisplay: 'separateLine' },
+          ],
+        }}
+      />,
+    );
+    const select = screen.getByRole('combobox', { name: 'context.speakerDisplay' });
+    expect((select as HTMLSelectElement).value).toBe('inline');
+    expect(screen.getByText('context.speakerExample.inline')).toBeTruthy();
+    fireEvent.change(select, { target: { value: 'separateLine' } });
+    expect(screen.getByText('context.speakerExample.separateLine')).toBeTruthy();
+    fireEvent.change(select, { target: { value: 'none' } });
+    expect(screen.getByText('context.speakerExample.none')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'app.save' }));
+    await vi.waitFor(() =>
+      expect(saveProfile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'general',
+          speakerDisplay: 'none',
+        }),
+      ),
+    );
+    fireEvent.change(screen.getByRole('combobox', { name: 'context.select' }), {
+      target: { value: 'game' },
+    });
+    expect((select as HTMLSelectElement).value).toBe('separateLine');
+    fireEvent.change(screen.getByRole('combobox', { name: 'context.select' }), {
+      target: { value: 'general' },
+    });
+    expect((select as HTMLSelectElement).value).toBe('inline');
+  });
   it('đặt nút xóa trước nút thử lại trong mục hồ sơ AI', () => {
     render(<Context snapshot={state()} />);
     const section = screen.getByRole('region', { name: 'context.aiTitle' });

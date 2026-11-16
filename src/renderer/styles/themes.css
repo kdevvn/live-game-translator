@@ -20,6 +20,7 @@
   --selection-bg: var(--color-base-100);
   --subtitle-text: #fff;
   --subtitle-bg: #111;
+  --subtitle-speaker: color-mix(in srgb, var(--subtitle-text) 65%, var(--subtitle-bg));
   --overlay-fullscreen-bg: #000;
   --scrim: #0006;
   --radius: 8px;

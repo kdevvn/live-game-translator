@@ -1,7 +1,5 @@
 import type { AppSettings, CaptureRegion, GameProfile } from './types';
 
-export const OVERLAY_FONT_SIZE_MAX = 100;
-
 export const PROFILE_INPUT_TOKEN_LIMIT_MIN = 1000;
 export const PROFILE_INPUT_TOKEN_LIMIT_MAX = 1000000;
 
@@ -19,6 +17,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   locale: 'vi',
   model: '',
   summaryModel: '',
+  summaryEnabled: false,
   profileModel: '',
   profileLearningInterval: 20,
   profileInputTokenLimit: 15000,
@@ -37,9 +36,9 @@ export const DEFAULT_PROFILE: GameProfile = {
   id: 'general',
   name: 'Chung',
   instructions: '',
+  speakerDisplay: 'inline',
   characters: [],
   relationships: [],
-  glossary: [],
   revision: 0,
 };
 /** Nhịp quan sát vùng OCR độc lập với tốc độ video preview. */

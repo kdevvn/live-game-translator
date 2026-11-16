@@ -93,7 +93,7 @@ export class ProfileTasks {
       if (state.error === 'CONTEXT_LIMIT') this.states.delete(id);
   }
 
-  /** Tìm lần khởi tạo hoặc lô tiếp theo, chạy song song với OCR và dịch. */
+  /** Tìm lần khởi tạo hoặc lô tiếp theo, chạy độc lập với dịch trên mọi provider. */
   wake(): void {
     if (this.current) return;
     const settings = this.settings();
@@ -154,7 +154,6 @@ export class ProfileTasks {
         instructions: profile.instructions,
         characters: profile.characters.map(({ name, aliases }) => ({ name, aliases })),
         relationships: profile.relationships,
-        glossary: profile.glossary,
       },
       dialogues: rows
         .filter(
@@ -204,10 +203,7 @@ export class ProfileTasks {
         profileId: task.profileId,
         status: this.db.profileWasCleared(task.profileId)
           ? 'cleared'
-          : (initial &&
-                !facts.characters.length &&
-                !facts.relationships.length &&
-                !facts.glossary.length) ||
+          : (initial && !facts.characters.length && !facts.relationships.length) ||
               this.db.profileHasNoInitialData(task.profileId)
             ? 'no_data'
             : 'completed',

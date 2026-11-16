@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SessionSnapshot } from '../../../shared/types';
+import { SubtitleText } from './SubtitleText';
 
 const OVERLAY_CLOSE_HIDE_DELAY_MS = 3000;
 
 /** Hiển thị OCR hoặc bản dịch mới nhất; chưa có nội dung thì để caption trống. */
 export function Overlay({ snapshot }: { snapshot: SessionSnapshot }) {
   const { t } = useTranslation();
-  const text = snapshot.overlayText;
   const [showClose, setShowClose] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pointerActive = useRef(false);
@@ -91,7 +91,9 @@ export function Overlay({ snapshot }: { snapshot: SessionSnapshot }) {
             </button>
           </div>
         )}
-        <p>{text}</p>
+        <p>
+          <SubtitleText snapshot={snapshot} />
+        </p>
       </div>
     </div>
   );

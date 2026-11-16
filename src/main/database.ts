@@ -51,7 +51,7 @@ export function openDatabase(path: string) {
   function migrate(): void {
     db.transaction(() => {
       const version = Number(db.pragma('user_version', { simple: true }));
-      if (version > 2) throw new Error('STORAGE');
+      if (version > 3) throw new Error('STORAGE');
       if (version === 0) {
         db.exec(`CREATE TABLE settings (id TEXT PRIMARY KEY, value TEXT NOT NULL);
           CREATE TABLE profiles (id TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -67,6 +67,15 @@ export function openDatabase(path: string) {
           CREATE TABLE profile_proposals (id TEXT PRIMARY KEY, profileId TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE, value TEXT NOT NULL);
           UPDATE profiles SET value=json_set(value, '$.aiEnabled', json('true')) WHERE id!='general' AND json_extract(value, '$.aiEnabled') IS NULL;
           PRAGMA user_version = 2;`);
+      }
+      if (version < 3) {
+        // Bỏ dữ liệu của chức năng đã gỡ; tăng revision để vô hiệu tác vụ hồ sơ cũ.
+        db.exec(`UPDATE profiles
+          SET value=json_set(json_remove(value, '$.glossary'), '$.revision', COALESCE(json_extract(value, '$.revision'), 0) + 1)
+          WHERE json_type(value, '$.glossary') IS NOT NULL;
+          DELETE FROM profile_proposals WHERE json_extract(value, '$.field')='glossary';
+          DELETE FROM translation_cache;
+          PRAGMA user_version = 3;`);
       }
       // Chỉ bỏ hồ sơ mặc định chưa được sử dụng; dữ liệu cũ có lịch sử được giữ lại.
       db.prepare(
@@ -188,7 +197,6 @@ export function openDatabase(path: string) {
           ...profile,
           characters: [],
           relationships: [],
-          glossary: [],
           revision: profile.revision + 1,
         });
         db.prepare('UPDATE profiles SET value=? WHERE id=?').run(
@@ -218,18 +226,16 @@ export function openDatabase(path: string) {
         if (!profile) throw new Error('INVALID_INPUT');
         if (profile.revision !== revision) throw new Error('PROFILE_CHANGED');
         const parsed = profileEnrichmentSchema.parse(input);
-        const dialogues =
-          parsed.characters.length || parsed.glossary.length
-            ? (db
-                .prepare(
-                  `SELECT json_extract(d.value, '$.text') AS text
+        const dialogues = parsed.characters.length
+          ? (db
+              .prepare(
+                `SELECT json_extract(d.value, '$.text') AS text
           FROM dialogues d JOIN sessions s ON s.id=d.sessionId
           WHERE s.profileId=? AND json_extract(d.value, '$.status')='translated'`,
-                )
-                .all(profileId) as { text: string }[])
-            : [];
+              )
+              .all(profileId) as { text: string }[])
+          : [];
         const facts = filterProfileEvidence(
-          profile,
           parsed,
           dialogues.map((dialogue) => dialogue.text),
         );
@@ -253,11 +259,10 @@ export function openDatabase(path: string) {
           db.prepare(
             'INSERT INTO profile_learning VALUES (?,?) ON CONFLICT(sessionId) DO UPDATE SET throughSequence=max(throughSequence,excluded.throughSequence)',
           ).run(sessionId, through);
-          if (facts.characters.length || facts.relationships.length || facts.glossary.length)
+          if (facts.characters.length || facts.relationships.length)
             db.prepare('UPDATE profile_ai SET initialized=1 WHERE profileId=?').run(profileId);
         } else {
-          const empty =
-            !facts.characters.length && !facts.relationships.length && !facts.glossary.length;
+          const empty = !facts.characters.length && !facts.relationships.length;
           db.prepare('INSERT OR REPLACE INTO profile_ai VALUES (?,?)').run(
             profileId,
             empty ? 2 : 1,
@@ -312,7 +317,7 @@ export function openDatabase(path: string) {
       if (!profiles().some((profile) => profile.id === profileId)) throw new Error('INVALID_INPUT');
       writeValue(PROFILE_REGION_PREFIX + profileId, JSON.stringify(regionSchema.parse(region)));
     },
-    /** Lưu cả hồ sơ nguyên tử; quan hệ/thuật ngữ là phần của document có phiên bản. */
+    /** Lưu cả hồ sơ nguyên tử; nhân vật và quan hệ thuộc document có phiên bản. */
     saveProfile(input: GameProfile): void {
       const old = profiles().find((p) => p.id === input.id);
       if (old && old.revision !== input.revision) throw new Error('PROFILE_CHANGED');

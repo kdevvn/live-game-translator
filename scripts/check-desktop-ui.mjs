@@ -90,7 +90,6 @@ try {
     state.sourceName = 'Gameplay fixture';
     state.profiles[0].id = 'preview-game';
     state.profiles[0].name = 'Lời tiên tri';
-    state.profiles[0].glossary = [{ source: 'Odin', target: 'Odin' }];
     state.profiles[0].characters = [{ id: 'atreus', name: 'Atreus', aliases: '' }];
     state.session = {
       id: 'preview',

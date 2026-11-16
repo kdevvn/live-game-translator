@@ -11,7 +11,7 @@ afterEach(cleanup);
 
 it('giữ bản nháp và tóm tắt cũ cùng icon khi đang xử lý, rồi bỏ icon khi hoàn tất', () => {
   const snapshot: SessionSnapshot = {
-    settings: DEFAULT_SETTINGS,
+    settings: { ...DEFAULT_SETTINGS, summaryEnabled: true },
     resolvedTheme: 'light',
     hasApiKey: false,
     profiles: [DEFAULT_PROFILE],

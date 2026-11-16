@@ -55,7 +55,6 @@ describe('Ngân sách riêng của hồ sơ game', () => {
     const enrich = vi.spyOn(api, 'enrichProfile').mockResolvedValue({
       characters: [],
       relationships: [],
-      glossary: [],
       evidence: 'Không có bổ sung',
     });
     const app = new SessionController(db, api, () => undefined);

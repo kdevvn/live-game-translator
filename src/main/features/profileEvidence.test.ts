@@ -9,90 +9,62 @@ describe('Lọc dữ kiện AI theo hội thoại', () => {
     relationships: [
       { speaker: 'Alice', listener: 'Bob', self: 'Tôi / ta', address: 'em hoặc con' },
     ],
-    glossary: [
-      { source: 'Star Gate', target: 'Cổng Sao' },
-      { source: 'Ally', target: 'Bạn' },
-    ],
     evidence: 'test',
   };
-  it('yêu cầu bốn câu khác nhau, chấp nhận tên hoặc biệt danh, bỏ tên khỏi thuật ngữ', () => {
+  it('yêu cầu bốn câu khác nhau, chấp nhận biệt danh và chuẩn hóa xưng hô', () => {
     const lines = [
-      'Ally found Star Gate.',
-      'ALICE sees star   gate!',
-      'Ally opens Star Gate.',
-      'Alice closed Star Gate.',
+      'Ally found the gate.',
+      'ALICE sees the tower!',
+      'Ally opens the door.',
+      'Alice closed the gate.',
     ];
-    const result = filterProfileEvidence(DEFAULT_PROFILE, facts, lines);
+    const result = filterProfileEvidence(facts, lines);
     expect(result.characters).toEqual([{ name: 'Alice', aliases: 'Ally' }]);
-    expect(result.glossary).toEqual([{ source: 'Star Gate', target: 'Cổng Sao' }]);
     expect(result.relationships[0]).toMatchObject({ self: 'Tôi', address: 'em' });
-    expect(filterProfileEvidence(DEFAULT_PROFILE, facts, lines.slice(0, 3)).characters).toEqual([]);
-    expect(filterProfileEvidence(DEFAULT_PROFILE, facts, lines.slice(0, 3)).glossary).toEqual([]);
+    expect(filterProfileEvidence(facts, lines.slice(0, 3)).characters).toEqual([]);
   });
-  it('không tính câu trùng hoặc từ nằm trong từ dài hơn', () => {
+  it('không tính câu trùng hoặc tên nằm trong từ dài hơn', () => {
     const lines = [
-      'Alice at Star Gate',
-      '  ALICE  AT STAR GATE ',
-      'Alice at Star Gateway',
-      'Malice at Star Gateway',
+      'Alice at the gate',
+      '  ALICE  AT THE GATE ',
+      'Malice at the tower',
+      'Allyson returns',
     ];
-    const result = filterProfileEvidence(DEFAULT_PROFILE, facts, lines);
-    expect(result.characters).toEqual([]);
-    expect(result.glossary).toEqual([]);
+    expect(filterProfileEvidence(facts, lines).characters).toEqual([]);
   });
-  it('loại tên và biệt danh ở cả hai phía, kể cả nhân vật AI chưa đủ điều kiện', () => {
-    const profile = {
-      ...DEFAULT_PROFILE,
-      characters: [{ id: 'one', name: 'Bob', aliases: 'Bobby' }],
-    };
-    const result = filterProfileEvidence(
-      profile,
-      {
-        ...facts,
-        characters: [{ name: 'Alice', aliases: 'Ally' }],
-        glossary: [
-          { source: 'Sword', target: 'Bobby' },
-          { source: 'Ally', target: 'Người bạn' },
-          { source: 'Alice', target: 'Alice' },
-        ],
-      },
-      ['Sword Ally Alice 1', 'Sword Ally Alice 2', 'Sword Ally Alice 3', 'Sword alone 4'],
-    );
-    expect(result.characters).toEqual([]);
-    expect(result.glossary).toEqual([]);
-  });
-  it('không tạo đề xuất mâu thuẫn khi thuật ngữ chưa đủ bằng chứng', () => {
+  it('không tạo đề xuất biệt danh khi nhân vật chưa đủ bằng chứng', () => {
     const db = openDatabase(':memory:');
     try {
       db.saveProfile({
         ...DEFAULT_PROFILE,
         id: 'game',
-        glossary: [{ source: 'Star Gate', target: 'Cũ' }],
+        characters: [{ id: 'a', name: 'Alice', aliases: 'Alicia' }],
       });
       db.applyProfileEnrichment('game', 0, facts);
       expect(db.profileProposals('game')).toEqual([]);
-      expect(db.profiles().find((p) => p.id === 'game')?.glossary).toEqual([
-        { source: 'Star Gate', target: 'Cũ' },
+      expect(db.profiles().find((profile) => profile.id === 'game')?.characters).toEqual([
+        { id: 'a', name: 'Alice', aliases: 'Alicia' },
       ]);
     } finally {
       db.close();
     }
   });
-  it('đếm từ DB qua các phiên, cả trước khi xóa hồ sơ và chỉ tính câu dịch thành công', () => {
+  it('đếm bằng chứng qua các phiên, giữ lịch sử khi xóa dữ kiện và chỉ tính câu dịch thành công', () => {
     const db = openDatabase(':memory:');
     try {
-      db.saveProfile({ ...DEFAULT_PROFILE, id: 'game', name: 'Game', instructions: 'Giữ nguyên' });
-      db.saveProfile({ ...DEFAULT_PROFILE, id: 'other', name: 'Other' });
+      db.saveProfile({ ...DEFAULT_PROFILE, id: 'game', instructions: 'Giữ nguyên' });
+      db.saveProfile({ ...DEFAULT_PROFILE, id: 'other' });
       const a = db.createSession('game');
       const b = db.createSession('game');
       const other = db.createSession('other');
-      const add = (
+      /** Lưu câu gốc để kiểm tra phạm vi hồ sơ và trạng thái đóng góp bằng chứng. */
+      function add(
         id: string,
         sessionId: string,
         sequence: number,
         text: string,
         status: 'translated' | 'error' = 'translated',
-      ) =>
+      ): void {
         db.saveDialogue({
           id,
           sessionId,
@@ -106,22 +78,21 @@ describe('Lọc dữ kiện AI theo hội thoại', () => {
           ocrMs: 0,
           apiMs: 0,
         });
-      add('one', a.id, 1, 'Ally found Star Gate.');
-      add('two', a.id, 2, 'Alice sees Star Gate.');
-      add('three', b.id, 1, 'Ally opens Star Gate.');
-      add('duplicate', b.id, 2, '  ALLY found   star gate. ');
-      add('wrong-profile', other.id, 1, 'Ally closes Star Gate.');
-      add('failed', b.id, 3, 'Alice closes Star Gate.', 'error');
+      }
+      add('one', a.id, 1, 'Ally found the gate.');
+      add('two', a.id, 2, 'Alice sees the tower.');
+      add('three', b.id, 1, 'Ally opens the door.');
+      add('duplicate', b.id, 2, '  ALLY found   the gate. ');
+      add('other-profile', other.id, 1, 'Ally closes the gate.');
+      add('failed', b.id, 3, 'Alice closes the gate.', 'error');
       db.applyProfileEnrichment('game', 0, facts);
-      expect(db.profiles().find((p) => p.id === 'game')?.characters).toEqual([]);
-      expect(db.profiles().find((p) => p.id === 'game')?.glossary).toEqual([]);
+      expect(db.profiles().find((profile) => profile.id === 'game')?.characters).toEqual([]);
       db.clearProfile('game', 1);
-      add('four', b.id, 4, 'Alice closes Star Gate.');
+      add('four', b.id, 4, 'Alice closes the gate.');
       db.applyProfileEnrichment('game', 2, facts);
-      const result = db.profiles().find((p) => p.id === 'game')!;
+      const result = db.profiles().find((profile) => profile.id === 'game')!;
       expect(result.instructions).toBe('Giữ nguyên');
       expect(result.characters[0]).toMatchObject({ name: 'Alice', aliases: 'Ally' });
-      expect(result.glossary).toEqual([{ source: 'Star Gate', target: 'Cổng Sao' }]);
       expect(result.relationships[0]).toMatchObject({ self: 'Tôi', address: 'em' });
     } finally {
       db.close();

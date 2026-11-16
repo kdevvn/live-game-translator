@@ -288,6 +288,9 @@ test('overlay toàn màn hình giữ vị trí cũ và cỡ chữ riêng', async
 
 test('lưu theme/locale và đồng bộ overlay', async () => {
   await page.getByRole('button', { name: 'Cài đặt', exact: true }).click();
+  const summary = page.getByRole('checkbox', { name: 'Dùng tóm tắt hội thoại', exact: true });
+  await expect(summary).not.toBeChecked();
+  await summary.check();
   await page.getByLabel('Chủ đề', { exact: true }).selectOption('dark');
   await page.getByLabel('Ngôn ngữ giao diện').selectOption('en');
   await page.getByLabel('Ngưỡng bỏ qua câu tương tự (%)', { exact: true }).fill('95');
@@ -310,6 +313,7 @@ test('lưu theme/locale và đồng bộ overlay', async () => {
   expect(result.ok && result.value.settings.model).toBe('');
   expect(result.ok && result.value.settings.duplicateThreshold).toBe(95);
   expect(result.ok && result.value.settings.overlayDurationSeconds).toBe(8);
+  expect(result.ok && result.value.settings.summaryEnabled).toBe(true);
   expect(result.ok && result.value).not.toHaveProperty('apiKey');
   await page.screenshot({ path: 'test-results/main-dark-en.png', fullPage: true });
 });
@@ -327,6 +331,7 @@ test('khởi động lại giữ theme/locale và không tự bật capture', as
   expect(result.ok && result.value.status).toBe('idle');
   expect(result.ok && result.value.settings.duplicateThreshold).toBe(95);
   expect(result.ok && result.value.settings.overlayDurationSeconds).toBe(8);
+  expect(result.ok && result.value.settings.summaryEnabled).toBe(true);
 });
 
 test('capture nguồn thử qua Electron thật và OCR offline', async () => {
@@ -574,11 +579,11 @@ test('key không quay về renderer và hồ sơ lưu được qua IPC thật', 
   expect(JSON.stringify(state)).not.toContain('test-only-not-a-real-key');
   const profile = {
     id: 'test-profile',
+    speakerDisplay: 'inline' as const,
     name: 'The Northern Gate',
     instructions: 'Cha xưng ta, gọi con.',
     characters: [],
     relationships: [{ speaker: 'Father', listener: 'Son', self: 'ta', address: 'con' }],
-    glossary: [{ source: 'Northern Gate', target: 'Cổng Bắc' }],
     revision: 0,
   };
   const saved = await page.evaluate((value) => window.app.saveProfile(value), profile);

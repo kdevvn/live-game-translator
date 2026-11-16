@@ -3,14 +3,107 @@ import { OpenRouter } from './openRouter';
 import { openDatabase } from '../database';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../../shared/defaults';
 import { SessionController } from './session';
-import type { ProfileEnrichment } from '../../shared/types';
 
 describe('Model và transport tác vụ nền', () => {
-  it.each(['lmStudio', 'ollama'] as const)(
-    'giữ lịch sử ổn định và tóm tắt song song qua %s suốt 50 câu, không hủy hoặc gửi trùng',
+  it.each(['openRouter', 'lmStudio', 'ollama'] as const)(
+    '%s bỏ qua tóm tắt khi tắt, hủy kết quả muộn và bật lại khi đang dịch',
     async (provider) => {
       const db = openDatabase(':memory:');
       db.saveProfile(DEFAULT_PROFILE);
+      const session = db.createSession('general');
+      db.saveSession({ ...session, summary: 'Ngữ cảnh cũ được giữ lại.' });
+      for (let sequence = 1; sequence <= 20; sequence++)
+        db.saveDialogue({
+          id: String(sequence),
+          sessionId: session.id,
+          sequence,
+          text: `Hello ${sequence}`,
+          translation: 'Chào.',
+          speaker: 'Alice',
+          listener: 'Bob',
+          status: 'translated',
+          createdAt: 0,
+          ocrMs: 0,
+          apiMs: 0,
+        });
+      const api = new OpenRouter(() => 'key');
+      let finishSummary: (text: string) => void = () => undefined;
+      const summary = vi.spyOn(api, 'summarize').mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            finishSummary = resolve;
+          }),
+      );
+      const result = { translation: 'Chào.', speaker: 'Alice', listener: 'Bob' };
+      let finishTranslation: (value: typeof result) => void = () => undefined;
+      const translate = vi
+        .spyOn(api, 'translate')
+        .mockResolvedValue(result)
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              finishTranslation = resolve;
+            }),
+        );
+      const app = new SessionController(db, api, () => undefined);
+      try {
+        app.updateSettings({
+          ...DEFAULT_SETTINGS,
+          provider,
+          model: 'cloud',
+          lmStudioModel: 'local',
+          ollamaModel: 'local',
+        });
+        app.environment(false, true);
+        app.openSession('general', session.id);
+        app.ready(app.begin());
+        app.runBackground();
+        app.ocr('New dialogue.', app.snapshot().generation, 0, true);
+        expect(summary).not.toHaveBeenCalled();
+        expect(
+          translate.mock.calls[0][1].some((message) => message.content.includes('previousSummary')),
+        ).toBe(false);
+        expect(app.snapshot().dialogues.at(-1)?.status).toBe('pending');
+        app.updateSettings({ ...app.snapshot().settings, summaryEnabled: true });
+        expect(summary).toHaveBeenCalledTimes(1);
+        expect(app.snapshot().summaryLoading).toBe(true);
+        app.updateSettings({ ...app.snapshot().settings, summaryEnabled: false });
+        expect(summary.mock.calls[0][2].aborted).toBe(true);
+        expect(app.snapshot().summaryLoading).toBe(false);
+        finishSummary('Kết quả trả muộn.');
+        await new Promise((resolve) => setImmediate(resolve));
+        expect(db.sessions().find((row) => row.id === session.id)).toMatchObject({
+          summary: 'Ngữ cảnh cũ được giữ lại.',
+          summarizedThrough: 0,
+        });
+        app.updateSettings({ ...app.snapshot().settings, summaryEnabled: true });
+        expect(summary).toHaveBeenCalledTimes(2);
+        finishSummary('Tóm tắt mới.');
+        await vi.waitFor(() => expect(app.snapshot().session?.summarizedThrough).toBe(20));
+        expect(app.snapshot().dialogues.at(-1)?.status).toBe('pending');
+        finishTranslation(result);
+        await vi.waitFor(() => expect(app.snapshot().dialogues.at(-1)?.status).toBe('translated'));
+        app.ocr('Another dialogue.', app.snapshot().generation, 0, true);
+        expect(
+          translate.mock.calls[1][1].some(
+            (message) => message.content === JSON.stringify({ previousSummary: 'Tóm tắt mới.' }),
+          ),
+        ).toBe(true);
+        expect(summary).toHaveBeenCalledTimes(2);
+        expect(app.snapshot().status).toBe('running');
+        await vi.waitFor(() => expect(app.snapshot().dialogues.at(-1)?.status).toBe('translated'));
+      } finally {
+        app.stop();
+        db.close();
+      }
+    },
+  );
+
+  it.each(['openRouter', 'lmStudio', 'ollama'] as const)(
+    'giữ lịch sử theo lô và tóm tắt song song qua %s suốt 50 câu',
+    async (provider) => {
+      const db = openDatabase(':memory:');
+      db.saveProfile({ ...DEFAULT_PROFILE, speakerDisplay: 'none' });
       const api = new OpenRouter(() => '');
       let finishSummary: (text: string) => void = () => undefined;
       const summary = vi.spyOn(api, 'summarize').mockImplementation(
@@ -29,48 +122,48 @@ describe('Model và transport tác vụ nền', () => {
         app.updateSettings({
           ...DEFAULT_SETTINGS,
           provider,
+          summaryEnabled: true,
+          model: 'cloud',
           lmStudioModel: 'local',
           ollamaModel: 'local',
         });
+        app.environment(false, true);
         app.openSession('general');
         const generation = app.begin();
         app.ready(generation);
         for (let index = 1; index <= 50; index++) {
           app.ocr(`Sentence number ${index}.`, generation, 0, true);
-          await new Promise((resolve) => setImmediate(resolve));
-          expect(app.snapshot().dialogues.at(-1)?.status).toBe('translated');
-          if (index < 20) expect(summary).not.toHaveBeenCalled();
-          else {
-            expect(summary).toHaveBeenCalledTimes(1);
-            expect(summary.mock.calls[0][2].aborted).toBe(false);
-          }
+          await vi.waitFor(() =>
+            expect(app.snapshot().dialogues.at(-1)?.status).toBe('translated'),
+          );
         }
+        expect(summary).toHaveBeenCalledTimes(1);
+        expect(summary.mock.calls[0][2].aborted).toBe(false);
         const thirteenth = translate.mock.calls[12][1];
         const fourteenth = translate.mock.calls[13][1];
         expect(fourteenth.slice(0, thirteenth.length - 1)).toEqual(thirteenth.slice(0, -1));
         expect(
           translate.mock.calls[49][1]
             .slice(1, -1)
-            .map((message) => JSON.parse(message.content).source),
+            .filter((message) => message.role === 'user')
+            .map((message) => JSON.parse(message.content).ocr),
         ).toEqual(Array.from({ length: 13 }, (_, index) => `Sentence number ${index + 37}.`));
         app.runBackground();
         expect(summary).toHaveBeenCalledTimes(1);
         expect(JSON.parse(summary.mock.calls[0][1]).dialogues).toHaveLength(20);
+        app.retry(app.snapshot().dialogues[0].id);
+        expect(summary.mock.calls[0][2].aborted).toBe(false);
         finishSummary('Đã nhớ hai mươi câu.');
-        await vi.waitFor(() => expect(summary).toHaveBeenCalledTimes(2));
-        expect(app.snapshot().session?.summarizedThrough).toBe(20);
-        expect(JSON.parse(summary.mock.calls[1][1])).toMatchObject({
-          summary: 'Đã nhớ hai mươi câu.',
-          dialogues: expect.arrayContaining([
-            expect.objectContaining({ text: 'Sentence number 21.' }),
-          ]),
-        });
+        await vi.waitFor(() => expect(app.snapshot().session?.summarizedThrough).toBe(20));
+        expect(summary).toHaveBeenCalledTimes(2);
         expect(app.snapshot().status).toBe('running');
-        app.stop('paused');
+        expect(JSON.parse(summary.mock.calls[1][1]).summary).toBe('Đã nhớ hai mươi câu.');
+        expect(JSON.parse(summary.mock.calls[1][1]).dialogues[0].text).toBe('Sentence number 21.');
+        app.openSession('general');
         expect(summary.mock.calls[1][2].aborted).toBe(true);
         finishSummary('Kết quả đã cũ.');
         await new Promise((resolve) => setImmediate(resolve));
-        expect(app.snapshot().session?.summarizedThrough).toBe(20);
+        expect(app.snapshot().session?.summarizedThrough).toBe(0);
       } finally {
         app.stop();
         db.close();
@@ -78,86 +171,48 @@ describe('Model và transport tác vụ nền', () => {
     },
   );
 
-  it.each(['lmStudio', 'ollama'] as const)(
-    'khởi tạo và học hồ sơ qua %s khi đang dịch, không bị câu mới hủy hoặc học lặp',
+  it.each(['openRouter', 'lmStudio', 'ollama'] as const)(
+    'khởi tạo hồ sơ qua %s chạy song song với câu dịch mới',
     async (provider) => {
       const db = openDatabase(':memory:');
       db.saveProfile({ ...DEFAULT_PROFILE, id: 'game', name: 'Game', aiEnabled: true });
-      db.saveSettings({
-        ...DEFAULT_SETTINGS,
-        provider,
-        lmStudioModel: 'local',
-        ollamaModel: 'local',
-        profileLearningInterval: 1,
-      });
       const api = new OpenRouter(() => '');
-      const facts: ProfileEnrichment = {
-        characters: [],
-        relationships: [],
-        glossary: [],
-        evidence: 'Chưa có dữ kiện.',
-      };
-      let finishProfile: (value: ProfileEnrichment) => void = () => undefined;
-      const enrich = vi.spyOn(api, 'enrichProfile').mockImplementation(
-        () =>
-          new Promise((resolve) => {
-            finishProfile = resolve;
-          }),
-      );
-      const result = { translation: 'Chào.', speaker: 'Alice', listener: 'Bob' };
-      let finishTranslation: (value: typeof result) => void = () => undefined;
-      const translate = vi.spyOn(api, 'translate').mockImplementation(
-        () =>
-          new Promise((resolve) => {
-            finishTranslation = resolve;
-          }),
-      );
+      const enrich = vi
+        .spyOn(api, 'enrichProfile')
+        .mockImplementationOnce(
+          (_model, _data, signal) =>
+            new Promise((_resolve, reject) => {
+              signal.addEventListener('abort', () => reject(new Error('CANCELLED')), {
+                once: true,
+              });
+            }),
+        )
+        .mockImplementationOnce(() => new Promise(() => undefined));
+      const translate = vi
+        .spyOn(api, 'translate')
+        .mockImplementation(() => new Promise(() => undefined));
       const app = new SessionController(db, api, () => undefined);
       try {
-        app.openSession('game');
-        const generation = app.begin();
-        app.ready(generation);
-        expect(enrich).toHaveBeenCalledTimes(1);
-        app.ocr('Hello Alice', generation, 0, true);
-        expect(app.snapshot().dialogues.at(-1)?.status).toBe('pending');
-        expect(enrich.mock.calls[0][2].aborted).toBe(false);
-        finishProfile(facts);
-        await vi.waitFor(() => expect(db.profileInitialized('game')).toBe(true));
-        finishTranslation(result);
-        await vi.waitFor(() => expect(enrich).toHaveBeenCalledTimes(2));
-        const sessionId = app.snapshot().session!.id;
-        expect(JSON.parse(enrich.mock.calls[1][1])).toMatchObject({
-          mode: 'learn',
-          dialogues: [expect.objectContaining({ text: 'Hello Alice' })],
+        app.updateSettings({
+          ...DEFAULT_SETTINGS,
+          provider,
+          model: 'cloud',
+          lmStudioModel: 'local',
+          ollamaModel: 'local',
         });
-        app.ocr('Another sentence', generation, 0, true);
+        app.environment(false, true);
+        expect(enrich).toHaveBeenCalledTimes(1);
+        app.openSession('game');
+        app.ready(app.begin());
+        app.retryProfile('game');
+        expect(enrich.mock.calls[0][2].aborted).toBe(true);
+        expect(enrich).toHaveBeenCalledTimes(2);
+        app.ocr('Hello world.', app.snapshot().generation, 0, true);
+        await vi.waitFor(() => expect(translate).toHaveBeenCalledTimes(1));
         expect(app.snapshot().dialogues.at(-1)?.status).toBe('pending');
         expect(enrich.mock.calls[1][2].aborted).toBe(false);
-        finishProfile({
-          ...facts,
-          relationships: [{ speaker: 'Alice', listener: 'Bob', self: 'chị', address: 'em' }],
-        });
-        await vi.waitFor(() => expect(db.profileLearningThrough(sessionId)).toBe(1));
-        expect(
-          app.snapshot().profiles.find((profile) => profile.id === 'game')?.relationships,
-        ).toEqual([{ speaker: 'Alice', listener: 'Bob', self: 'chị', address: 'em' }]);
-        expect(app.snapshot().status).toBe('running');
-        app.runBackground();
-        expect(enrich).toHaveBeenCalledTimes(2);
-        finishTranslation(result);
-        await vi.waitFor(() => expect(enrich).toHaveBeenCalledTimes(3));
-        expect(JSON.parse(enrich.mock.calls[2][1]).dialogues).toEqual([
-          expect.objectContaining({ text: 'Another sentence' }),
-        ]);
-        finishProfile(facts);
-        await vi.waitFor(() => expect(db.profileLearningThrough(sessionId)).toBe(2));
-        app.ocr('The next sentence', generation, 0, true);
-        expect(JSON.stringify(translate.mock.calls[2][1])).toContain('chị');
         app.stop();
-        finishTranslation(result);
-        await new Promise((resolve) => setImmediate(resolve));
-        expect(db.profileLearningThrough(sessionId)).toBe(2);
-        expect(enrich).toHaveBeenCalledTimes(3);
+        expect(enrich.mock.calls[1][2].aborted).toBe(true);
       } finally {
         app.stop();
         db.close();
@@ -220,7 +275,6 @@ describe('Model và transport tác vụ nền', () => {
     const data = {
       characters: [],
       relationships: [],
-      glossary: [],
       evidence: 'Không biết game',
     };
     const translation = vi.fn<typeof fetch>();
@@ -250,6 +304,7 @@ describe('Model và transport tác vụ nền', () => {
     });
     expect(body.response_format.json_schema.name).toBe('profile_enrichment');
     expect(body.response_format.json_schema.schema.properties).not.toHaveProperty('instructions');
+    expect(body.response_format.json_schema.schema.properties).not.toHaveProperty('glossary');
     expect(translation).not.toHaveBeenCalled();
   });
   it('tóm tắt không bị câu mới hủy và lưu được khi dịch vẫn chạy', async () => {
@@ -270,7 +325,12 @@ describe('Model và transport tác vụ nền', () => {
     });
     const app = new SessionController(db, api, () => undefined);
     try {
-      app.updateSettings({ ...DEFAULT_SETTINGS, model: 'translation', summaryModel: 'summary' });
+      app.updateSettings({
+        ...DEFAULT_SETTINGS,
+        summaryEnabled: true,
+        model: 'translation',
+        summaryModel: 'summary',
+      });
       app.environment(false, true);
       app.openSession('general');
       const session = app.snapshot().session!;

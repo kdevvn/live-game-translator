@@ -16,16 +16,12 @@ function proposalText(proposal: ProfileProposal, value: string): string {
       : profileSchema.shape.characters.parse(data);
     return rows.map((row) => [row.name, row.aliases].filter(Boolean).join(' · ')).join('\n');
   }
-  if (proposal.field === 'relationships') {
-    const rows = proposal.key
-      ? [profileSchema.shape.relationships.element.parse(data)]
-      : profileSchema.shape.relationships.parse(data);
-    return rows
-      .map((row) => `${row.speaker} → ${row.listener}: ${row.self} / ${row.address}`)
-      .join('\n');
-  }
-  const row = profileSchema.shape.glossary.element.parse(data);
-  return `${row.source} → ${row.target}`;
+  const rows = proposal.key
+    ? [profileSchema.shape.relationships.element.parse(data)]
+    : profileSchema.shape.relationships.parse(data);
+  return rows
+    .map((row) => `${row.speaker} → ${row.listener}: ${row.self} / ${row.address}`)
+    .join('\n');
 }
 
 /** Tiến độ và các đề xuất AI độc lập với bản hồ sơ người dùng đang nhập. */

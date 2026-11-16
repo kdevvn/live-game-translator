@@ -6,7 +6,7 @@ Dịch phụ đề game từ tiếng Anh sang tiếng Việt ngay trên Windows.
 
 - Nhận dạng chữ cục bộ bằng PaddleOCR; hỗ trợ dịch qua **OpenRouter, LM Studio và Ollama**.
 - Hiển thị bản dịch dần trên overlay có thể di chuyển, chỉnh cỡ chữ và bấm xuyên qua.
-- Hồ sơ riêng cho từng game: nhân vật, thuật ngữ và quy tắc xưng hô; hỗ trợ AI bổ sung hồ sơ từ hội thoại.
+- Hồ sơ riêng cho từng game: nhân vật và quy tắc xưng hô; hỗ trợ AI bổ sung hồ sơ từ hội thoại.
 - Lưu lịch sử, tiếp tục phiên cũ và chỉnh sửa bản dịch.
 - Giao diện tiếng Việt/Anh, theme sáng/tối và phím tắt tùy chỉnh.
 
