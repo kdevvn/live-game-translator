@@ -1,6 +1,6 @@
 {
   "name": "translate-game",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Dịch phụ đề cửa sổ Windows bằng OCR và OpenRouter",
   "author": "Translate Game",
   "private": true,
